@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { ROLES, USER_STATUS } = require('../utils/constants');
+const bcrypt = require('bcryptjs');
 
 module.exports = (sequelize) => {
   const User = sequelize.define('User', {
@@ -15,14 +15,17 @@ module.exports = (sequelize) => {
     correo: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      unique: true
+      unique: true,
+      validate: {
+        isEmail: true
+      }
     },
     contraseña: {
       type: DataTypes.STRING(255),
       allowNull: false
     },
     rol: {
-      type: DataTypes.ENUM(ROLES.ADMIN, ROLES.TENANT),
+      type: DataTypes.ENUM('Administrador', 'Inquilino'),
       allowNull: false
     },
     telefono: {
@@ -43,8 +46,8 @@ module.exports = (sequelize) => {
       allowNull: true
     },
     estado: {
-      type: DataTypes.ENUM(USER_STATUS.ACTIVE, USER_STATUS.PENDING, USER_STATUS.RETIRED),
-      defaultValue: USER_STATUS.ACTIVE
+      type: DataTypes.ENUM('Activo', 'Pendiente', 'Retirado'),
+      defaultValue: 'Activo'
     },
     plan: {
       type: DataTypes.ENUM('Gratuito', 'Estándar', 'Premium'),
@@ -62,7 +65,19 @@ module.exports = (sequelize) => {
     tableName: 'usuarios',
     timestamps: true,
     createdAt: 'fecha_creacion',
-    updatedAt: false
+    updatedAt: false,
+    hooks: {
+      beforeCreate: async (user) => {
+        if (user.contraseña) {
+          user.contraseña = await bcrypt.hash(user.contraseña, 10);
+        }
+      },
+      beforeUpdate: async (user) => {
+        if (user.changed('contraseña')) {
+          user.contraseña = await bcrypt.hash(user.contraseña, 10);
+        }
+      }
+    }
   });
 
   return User;

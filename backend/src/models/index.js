@@ -1,19 +1,14 @@
 const sequelize = require('../config/sequelize');
 
-// Importar modelos
-const User = require('./user')(sequelize);
-
-// Sincronizar asociaciones
-Object.keys(sequelize.models).forEach(modelName => {
-  if (sequelize.models[modelName].associate) {
-    sequelize.models[modelName].associate(sequelize.models);
-  }
-});
+// ✅ Cargar modelos manualmente (más estable)
+const User = require('./user')(sequelize, require('sequelize').DataTypes);
 
 const db = {
+  User,
   sequelize,
-  Sequelize: require('sequelize'),
-  User
+  Sequelize: require('sequelize')
 };
+
+console.log('🔍 Modelos cargados:', Object.keys(db));
 
 module.exports = db;
