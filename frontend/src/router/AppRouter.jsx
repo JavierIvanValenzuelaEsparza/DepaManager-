@@ -1,48 +1,51 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-
-// Páginas públicas
+import { useAuth } from '../contexts/AuthContext';
 import LandingPage from '../pages/public/LandingPage';
-import AdminAuthPage from '../pages/public/AdminAuthPage';
-import TenantLoginPage from '../pages/public/TenantLoginPage';
-
-// Rutas protegidas
+import LoginPage from '../pages/public/LoginPage';
 import AdminRoutes from './AdminRoutes';
 import TenantRoutes from './TenantRoutes';
 
 export default function AppRouter() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+      </div>
+    );
+  }
 
   return (
     <Routes>
       {/* Rutas públicas */}
       <Route path="/" element={<LandingPage />} />
-      <Route path="/admin/auth" element={<AdminAuthPage />} />
-      <Route path="/tenant/login" element={<TenantLoginPage />} />
+      <Route path="/admin/auth" element={<LoginPage />} />
 
-      {/* Rutas protegidas para Admin */}
+      {/* Rutas protegidas - Admin */}
+      {user?.rol === 'Administrador' && (
+        <Route path="/admin/*" element={<AdminRoutes />} />
+      )}
+
+      {/* Rutas protegidas - Inquilino */}
+      {user?.rol === 'Inquilino' && (
+        <Route path="/tenant/*" element={<TenantRoutes />} />
+      )}
+
+      {/* Redirección por defecto */}
       <Route 
-        path="/admin/*" 
+        path="*" 
         element={
-          isAuthenticated && user?.role === 'admin' ? 
-            <AdminRoutes /> : 
-            <Navigate to="/admin/auth" replace />
+          user ? (
+            user.rol === 'Administrador' ? 
+              <Navigate to="/admin/dashboard" replace /> : 
+              <Navigate to="/tenant/dashboard" replace />
+          ) : (
+            <Navigate to="/" replace />
+          )
         } 
       />
-
-      {/* Rutas protegidas para Tenant */}
-      <Route 
-        path="/tenant/*" 
-        element={
-          isAuthenticated && user?.role === 'tenant' ? 
-            <TenantRoutes /> : 
-            <Navigate to="/tenant/login" replace />
-        } 
-      />
-
-      {/* Redirigir rutas no encontradas */}
-      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

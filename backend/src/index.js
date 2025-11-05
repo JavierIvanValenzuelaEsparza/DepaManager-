@@ -18,8 +18,13 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ✅ DEBUG: Verificar rutas antes de cargarlas
+console.log('🔍 Cargando rutas...');
+
 // Rutas
 app.use('/auth', require('./routes/auth.routes'));
+app.use('/admin', require('./routes/admin.routes'));
+app.use('/tenant', require('./routes/tenant.routes'));
 
 // Ruta de salud
 app.get('/health', async (req, res) => {
@@ -40,11 +45,35 @@ app.get('/health', async (req, res) => {
   }
 });
 
+// Ruta de prueba raíz
+app.get('/', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: '🚀 DepaManager Backend API',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/auth',
+      admin: '/admin', 
+      tenant: '/tenant',
+      health: '/health'
+    }
+  });
+});
+
 // Manejo de errores 404
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
-    message: 'Ruta no encontrada'
+    message: `Ruta no encontrada: ${req.originalUrl}`
+  });
+});
+
+// Manejo de errores global
+app.use((err, req, res, next) => {
+  console.error('❌ Error no manejado:', err);
+  res.status(500).json({
+    success: false,
+    message: 'Error interno del servidor'
   });
 });
 
@@ -61,7 +90,7 @@ const startServer = async () => {
     // Sincronizar SIN alterar y SIN forzar (solo crear si no existen)
     await sequelize.sync({ 
       force: false, 
-      alter: false  // ❌ IMPORTANTE: No alterar estructura existente
+      alter: false
     });
     
     console.log('✅ Tablas verificadas/creadas correctamente');
@@ -72,17 +101,13 @@ const startServer = async () => {
       console.log(`📊 BD: ${process.env.DB_HOST}:${process.env.DB_PORT}`);
       console.log(`🔑 JWT: ${process.env.JWT_SECRET ? '✅ Configurado' : '❌ FALTANTE'}`);
       console.log(`🌐 CORS: Habilitado para http://localhost:3001`);
+      console.log(`📋 Endpoints disponibles:`);
+      console.log(`   - http://localhost:${PORT}/`);
+      console.log(`   - http://localhost:${PORT}/health`);
+      console.log(`   - http://localhost:${PORT}/auth/login`);
     });
   } catch (error) {
     console.error('❌ Error al iniciar servidor:', error);
-    
-    // Si el error es por demasiados índices, intentar solución alternativa
-    if (error.parent && error.parent.code === 'ER_TOO_MANY_KEYS') {
-      console.log('\n💡 SOLUCIÓN ALTERNATIVA:');
-      console.log('Ejecuta el script SQL manualmente en Railway para crear las tablas');
-      console.log('Luego cambia a sequelize.sync({ force: false, alter: false })');
-    }
-    
     process.exit(1);
   }
 };
