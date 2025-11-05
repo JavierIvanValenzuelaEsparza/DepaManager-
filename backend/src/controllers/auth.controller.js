@@ -5,10 +5,15 @@ const { User } = require('../models');
 // LOGIN DE USUARIO
 const login = async (req, res) => {
   try {
-    const { correo, contraseña } = req.body;
+    console.log('=== 🔍 DEBUG BACKEND REGISTRO ===');
+    console.log('📥 Body COMPLETO recibido:', JSON.stringify(req.body, null, 2));
+    console.log('📥 Headers:', req.headers);
+    console.log('📥 Content-Type:', req.get('Content-Type'));
+
+    const { correo, contrasenia } = req.body;
 
     // Validar campos requeridos
-    if (!correo || !contraseña) {
+    if (!correo || !contrasenia) {
       return res.status(400).json({
         success: false,
         message: 'Correo y contraseña son requeridos'
@@ -29,11 +34,26 @@ const login = async (req, res) => {
       });
     }
 
-    console.log('✅ Usuario encontrado:', usuario.id_usuario);
+    console.log('✅ Usuario encontrado ID:', usuario.idUsuario); // ✅ CAMBIADO: id_usuario → idUsuario
 
-    // Verificar contraseña
-    const contraseñaValida = await bcrypt.compare(contraseña, usuario.contraseña);
-    if (!contraseñaValida) {
+        // ✅ AGREGAR ESTOS LOGS CRÍTICOS:
+    console.log('🔍 Estado del usuario:', usuario.estado);
+    console.log('🔍 Contraseña recibida del frontend:', contrasenia ? '***' : 'VACÍA');
+    console.log('🔍 Contraseña en BD existe?:', usuario.contrasenia ? 'SÍ' : 'NO');
+    console.log('🔍 Método validarContrasenia existe?:', typeof usuario.validarContrasenia);
+
+
+    // Verificar contraseña usando el método del modelo
+    let contraseniaValida;
+    if (typeof usuario.validarContrasenia === 'function') {
+      contraseniaValida = await usuario.validarContrasenia(contrasenia);
+    } else {
+      // Fallback si el método no existe
+      console.log('⚠️ Usando bcrypt directamente');
+      contraseniaValida = await bcrypt.compare(contrasenia, usuario.contrasenia);
+    }
+
+    if (!contraseniaValida) {
       return res.status(401).json({
         success: false,
         message: 'Credenciales inválidas'
@@ -51,18 +71,18 @@ const login = async (req, res) => {
     // Generar token JWT
     const token = jwt.sign(
       { 
-        id: usuario.id_usuario, 
+        id: usuario.idUsuario, // ✅ CAMBIADO: id_usuario → idUsuario
         correo: usuario.correo,
         rol: usuario.rol 
       },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || 'fallback_secret_2024',
       { expiresIn: '24h' }
     );
 
-    // Responder con datos del usuario
+    // Responder con datos del usuario - USAR LOS NOMBRES DEL MODELO
     const usuarioData = {
-      id: usuario.id_usuario,
-      nombre_completo: usuario.nombre_completo,
+      id: usuario.idUsuario, // ✅ CAMBIADO
+      nombre: usuario.nombreCompleto, // ✅ CAMBIADO: nombre_completo → nombreCompleto
       correo: usuario.correo,
       rol: usuario.rol,
       telefono: usuario.telefono,
@@ -76,25 +96,56 @@ const login = async (req, res) => {
       success: true,
       message: 'Login exitoso',
       token,
-      usuario: usuarioData
+      user: usuarioData // ✅ CAMBIADO: usuario → user (para consistencia con frontend)
     });
 
   } catch (error) {
     console.error('❌ Error en login:', error);
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor'
+      message: 'Error interno del servidor: ' + error.message
     });
   }
 };
 
 // REGISTRO DE ADMINISTRADOR
+// REGISTRO DE ADMINISTRADOR - VERSIÓN CORREGIDA
 const registerAdmin = async (req, res) => {
   try {
-    const { nombre_completo, correo, contraseña, telefono, dni } = req.body;
+    console.log('=== 🔍 DEBUG BACKEND REGISTRO ===');
+    console.log('📥 Body COMPLETO recibido:', req.body);
 
-    // Validar campos requeridos
-    if (!nombre_completo || !correo || !contraseña) {
+    // ✅ ACEPTAR nombre_completo Y nombre
+    const { 
+      nombre, 
+      nombre_completo,  // ← AGREGAR ESTE CAMPO
+      correo, 
+      contrasenia, 
+      telefono, 
+      dni 
+    } = req.body;
+
+    console.log('🔍 Campos recibidos:', {
+      nombre,
+      nombre_completo,
+      correo,
+      contrasenia: contrasenia ? '***' : 'VACÍA',
+      telefono,
+      dni
+    });
+
+    // ✅ USAR nombre_completo SI ESTÁ PRESENTE, SINO nombre
+    const nombreFinal = nombre_completo || nombre;
+
+    console.log('🔍 Nombre final a usar:', nombreFinal);
+
+    // Validar campos requeridos CON EL NOMBRE FINAL
+    if (!nombreFinal || !correo || !contrasenia) {
+      console.log('❌ Campos faltantes:', {
+        nombre: !!nombreFinal,
+        correo: !!correo,
+        contrasenia: !!contrasenia
+      });
       return res.status(400).json({
         success: false,
         message: 'Nombre, correo y contraseña son requeridos'
@@ -104,60 +155,63 @@ const registerAdmin = async (req, res) => {
     // Verificar si el correo ya existe
     const usuarioExistente = await User.findOne({ where: { correo } });
     if (usuarioExistente) {
+      console.log('❌ Correo ya registrado:', correo);
       return res.status(400).json({
         success: false,
         message: 'El correo ya está registrado'
       });
     }
 
-    // Hashear contraseña
-    const saltRounds = 10;
-    const contraseñaHash = await bcrypt.hash(contraseña, saltRounds);
+    console.log('👤 Creando nuevo usuario administrador...');
 
-    // Crear usuario administrador
+    // Crear usuario administrador - USAR nombreFinal
     const nuevoUsuario = await User.create({
-      nombre_completo,
+      nombreCompleto: nombreFinal,  // ✅ Usar el nombre normalizado
       correo,
-      contraseña: contraseñaHash,
+      contrasenia,
       rol: 'Administrador',
-      telefono,
-      dni,
+      telefono: telefono || null,
+      dni: dni || null,
       estado: 'Activo'
     });
+
+    console.log('✅ Usuario creado ID:', nuevoUsuario.idUsuario);
 
     // Generar token
     const token = jwt.sign(
       { 
-        id: nuevoUsuario.id_usuario, 
+        id: nuevoUsuario.idUsuario,
         correo: nuevoUsuario.correo,
         rol: nuevoUsuario.rol 
       },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || 'fallback_secret_2024',
       { expiresIn: '24h' }
     );
 
     // Responder sin contraseña
     const usuarioData = {
-      id: nuevoUsuario.id_usuario,
-      nombre_completo: nuevoUsuario.nombre_completo,
+      id: nuevoUsuario.idUsuario,
+      nombre: nuevoUsuario.nombreCompleto,
       correo: nuevoUsuario.correo,
       rol: nuevoUsuario.rol,
       telefono: nuevoUsuario.telefono,
       estado: nuevoUsuario.estado
     };
 
+    console.log('🎉 Registro exitoso para:', nuevoUsuario.correo);
+
     res.status(201).json({
       success: true,
       message: 'Administrador registrado exitosamente',
       token,
-      usuario: usuarioData
+      user: usuarioData
     });
 
   } catch (error) {
-    console.error('❌ Error en registro:', error);
+    console.error('❌ Error completo en registro:', error);
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor'
+      message: 'Error interno del servidor: ' + error.message
     });
   }
 };
@@ -174,11 +228,11 @@ const verifyToken = async (req, res) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_2024');
     
     // Buscar usuario
     const usuario = await User.findByPk(decoded.id, {
-      attributes: { exclude: ['contraseña'] }
+      attributes: { exclude: ['contrasenia'] }
     });
 
     if (!usuario) {
@@ -190,7 +244,14 @@ const verifyToken = async (req, res) => {
 
     res.json({
       success: true,
-      usuario
+      user: { // ✅ CAMBIADO: usuario → user
+        id: usuario.idUsuario, // ✅ CAMBIADO
+        nombre: usuario.nombreCompleto, // ✅ CAMBIADO
+        correo: usuario.correo,
+        rol: usuario.rol,
+        telefono: usuario.telefono,
+        estado: usuario.estado
+      }
     });
 
   } catch (error) {
@@ -202,7 +263,6 @@ const verifyToken = async (req, res) => {
   }
 };
 
-// ✅ EXPORTAR LAS FUNCIONES DIRECTAMENTE
 module.exports = {
   login,
   registerAdmin,

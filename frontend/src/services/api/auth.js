@@ -29,14 +29,21 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor para manejar respuestas de error
+// Interceptor para manejar respuestas - VERSIÓN MEJORADA
 api.interceptors.response.use(
   (response) => {
     console.log('📥 Respuesta recibida:', response.status, response.config.url);
+    console.log('📥 Datos de la respuesta:', response.data);
     return response;
   },
   (error) => {
-    console.error('❌ Error en respuesta:', error.response?.status, error.message);
+    console.error('❌ Error completo en respuesta:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message,
+      url: error.config?.url
+    });
     
     if (error.response?.status === 401) {
       localStorage.removeItem('depamanager_token');
@@ -48,26 +55,49 @@ api.interceptors.response.use(
 );
 
 export const authAPI = {
-  // Login
+  // Login - VERSIÓN MEJORADA CON MÁS LOGS
   login: async (credentials) => {
     try {
       console.log('🔐 Intentando login...');
+      console.log('📤 Credenciales enviadas:', { 
+        correo: credentials.correo, 
+        contrasenia: credentials.contrasenia ? '***' : 'VACÍA' 
+      });
+      
       const response = await api.post('/auth/login', credentials);
+      
+      console.log('✅ Respuesta del login recibida:', response.data);
+      console.log('✅ Token recibido:', response.data.token ? 'SÍ' : 'NO');
+      console.log('✅ User data recibido:', response.data.user);
+      
       return response.data;
     } catch (error) {
-      console.error('❌ Error en login API:', error);
+      console.error('❌ Error completo en login API:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        url: error.config?.url
+      });
       throw error;
     }
   },
 
-  // Registro de administrador
+  // Registro de administrador - VERSIÓN MEJORADA
   registerAdmin: async (userData) => {
     try {
       console.log('👤 Intentando registro...');
+      console.log('📤 Datos enviados:', userData);
+      
       const response = await api.post('/auth/register-admin', userData);
+      
+      console.log('✅ Registro exitoso:', response.data);
       return response.data;
     } catch (error) {
-      console.error('❌ Error en registro API:', error);
+      console.error('❌ Error en registro API:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
       throw error;
     }
   },

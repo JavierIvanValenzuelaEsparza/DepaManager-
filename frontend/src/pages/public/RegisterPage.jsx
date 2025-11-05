@@ -7,8 +7,8 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({
     nombre_completo: '',
     correo: '',
-    contraseña: '',
-    confirmarContraseña: '',
+    contrasenia: '',
+    confirmarContrasenia: '',
     telefono: '',
     dni: ''
   });
@@ -24,18 +24,29 @@ export default function RegisterPage() {
       [e.target.name]: e.target.value
     });
   };
-
+  console.log('=== 🔍 DEBUG FRONTEND REGISTRO ===');
+  console.log('📤 Estado formData:', formData);
+  console.log('📤 Keys de formData:', Object.keys(formData));
+  console.log('📤 Valores de formData:', {
+    nombre_completo: formData.nombre_completo,
+    correo: formData.correo,
+    contrasenia: formData.contrasenia,
+    confirmarContrasenia: formData.confirmarContrasenia,
+    telefono: formData.telefono,
+    dni: formData.dni
+  });
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     // Validaciones
-    if (formData.contraseña !== formData.confirmarContraseña) {
+    if (formData.contrasenia !== formData.confirmarContrasenia) {
       setError('Las contraseñas no coinciden');
       return;
     }
 
-    if (formData.contraseña.length < 6) {
+    if (formData.contrasenia.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres');
       return;
     }
@@ -43,7 +54,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const { confirmarContraseña, ...userData } = formData;
+      const { confirmarContrasenia, ...userData } = formData;
       
       const result = await registerAdmin(userData);
 
@@ -144,14 +155,14 @@ export default function RegisterPage() {
 
             {/* Campo Contraseña */}
             <div>
-              <label htmlFor="contraseña" className="block text-sm font-medium text-slate-700 mb-2">
+              <label htmlFor="contrasenia" className="block text-sm font-medium text-slate-700 mb-2">
                 Contraseña*
               </label>
               <input
-                id="contraseña"
-                name="contraseña"
+                id="contrasenia"
+                name="contrasenia"
                 type="password"
-                value={formData.contraseña}
+                value={formData.contrasenia}
                 onChange={handleChange}
                 required
                 className="w-full px-5 py-3 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
@@ -161,14 +172,14 @@ export default function RegisterPage() {
 
             {/* Campo Confirmar Contraseña */}
             <div>
-              <label htmlFor="confirmarContraseña" className="block text-sm font-medium text-slate-700 mb-2">
+              <label htmlFor="confirmarContrasenia" className="block text-sm font-medium text-slate-700 mb-2">
                 Confirmar Contraseña*
               </label>
               <input
-                id="confirmarContraseña"
-                name="confirmarContraseña"
+                id="confirmarContrasenia"
+                name="confirmarContrasenia"
                 type="password"
-                value={formData.confirmarContraseña}
+                value={formData.confirmarContrasenia}
                 onChange={handleChange}
                 required
                 className="w-full px-5 py-3 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"

@@ -19,12 +19,12 @@ export default function LoginPage() {
     try {
       const result = await login({ 
         correo: email, 
-        contraseña: password 
+        contrasenia: password 
       });
 
       if (result.success) {
         // Redirigir según el rol
-        if (result.data.usuario.rol === 'Administrador') {
+        if (result.data.user.rol === 'Administrador') {
           navigate('/admin/dashboard');
         } else {
           navigate('/tenant/dashboard');
