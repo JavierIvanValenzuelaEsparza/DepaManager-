@@ -1,180 +1,140 @@
 const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
 
-/**
- * MODELO DE USUARIO (User)
- * Define la estructura y comportamiento de la entidad Usuario en la base de datos
- * Se encarga de la autenticación, validación y gestión de usuarios del sistema
- */
 module.exports = (sequelize) => {
   const User = sequelize.define('User', {
-    // 🔑 IDENTIFICACIÓN PRINCIPAL
     idUsuario: {
       type: DataTypes.INTEGER,
-      primaryKey: true,           // ✅ Llave primaria
-      autoIncrement: true,        // ✅ Auto-incrementable
-      field: 'id_usuario'         // ✅ Mapea a columna 'id_usuario' en BD
+      primaryKey: true,
+      autoIncrement: true,
+      field: 'id_usuario'
     },
-
-    // 👤 INFORMACIÓN PERSONAL
     nombreCompleto: {
       type: DataTypes.STRING(150),
-      allowNull: false,           // ✅ Campo obligatorio
-      field: 'nombre_completo'    // ✅ Mapea a columna 'nombre_completo' en BD
+      allowNull: false,
+      field: 'nombre_completo'
     },
-    
-    // 📧 CREDENCIALES DE ACCESO
     correo: {
       type: DataTypes.STRING(100),
-      allowNull: false,           // ✅ Campo obligatorio
-      unique: true,               // ✅ Email único en el sistema
+      allowNull: false,
+      unique: true,
       validate: {
-        isEmail: true            // ✅ Validación de formato email
+        isEmail: true
       }
     },
-    
-    // 🔐 CONTRASEÑA SEGURA
     contrasenia: {
       type: DataTypes.STRING(255),
-      allowNull: false,           // ✅ Campo obligatorio
-      field: 'contraseña'         // ✅ Mapea a columna 'contraseña' en BD (con ñ)
-      // ⚠️ NOTA: El campo en código usa 'contrasenia' (sin ñ) pero en BD es 'contraseña' (con ñ)
-      // Esto evita problemas con caracteres especiales en JavaScript
+      allowNull: false,
+      field: 'contraseña'
     },
-
-    // 🎯 ROLES DEL SISTEMA
     rol: {
       type: DataTypes.ENUM('Administrador', 'Inquilino'),
-      allowNull: false           // ✅ Campo obligatorio
+      allowNull: false
     },
-
-    // 📞 INFORMACIÓN DE CONTACTO
     telefono: {
       type: DataTypes.STRING(20),
-      allowNull: true            // ✅ Campo opcional
+      allowNull: true
     },
-    
     dni: {
       type: DataTypes.STRING(20),
-      unique: true,              // ✅ DNI único en el sistema
-      allowNull: true            // ✅ Campo opcional
+      unique: true,
+      allowNull: true
     },
-
-    // 🎂 INFORMACIÓN DEMOGRÁFICA
     fechaNacimiento: {
       type: DataTypes.DATE,
-      allowNull: true,           // ✅ Campo opcional
-      field: 'fecha_nacimiento'  // ✅ Mapea a columna 'fecha_nacimiento' en BD
+      allowNull: true,
+      field: 'fecha_nacimiento'
     },
-
-    // 🖼️ ARCHIVOS MULTIMEDIA
     fotoPerfil: {
       type: DataTypes.STRING(255),
-      allowNull: true,           // ✅ Campo opcional
-      field: 'foto_perfil'       // ✅ Mapea a columna 'foto_perfil' en BD
+      allowNull: true,
+      field: 'foto_perfil'
     },
-
-    // 🚦 ESTADOS DEL USUARIO
     estado: {
       type: DataTypes.ENUM('Activo', 'Pendiente', 'Retirado'),
-      defaultValue: 'Activo'     // ✅ Valor por defecto: Activo
+      defaultValue: 'Activo'
     },
-
-    // 💼 PLANES DE SUSCRIPCIÓN
     plan: {
       type: DataTypes.ENUM('Gratuito', 'Estándar', 'Premium'),
-      defaultValue: 'Gratuito'   // ✅ Valor por defecto: Gratuito
+      defaultValue: 'Gratuito'
     },
-
-    // 📅 INFORMACIÓN DE CONTRATOS
     fechaInicioContrato: {
       type: DataTypes.DATE,
-      allowNull: true,           // ✅ Campo opcional
-      field: 'fecha_inicio_contrato'  // ✅ Mapea a columna en BD
+      allowNull: true,
+      field: 'fecha_inicio_contrato'
     },
-    
     fechaFinContrato: {
       type: DataTypes.DATE,
-      allowNull: true,           // ✅ Campo opcional
-      field: 'fecha_fin_contrato'     // ✅ Mapea a columna en BD
+      allowNull: true,
+      field: 'fecha_fin_contrato'
     },
-
-    // 🕐 METADATOS DEL SISTEMA
     fechaCreacion: {
       type: DataTypes.DATE,
-      field: 'fecha_creacion',   // ✅ Mapea a columna 'fecha_creacion' en BD
-      allowNull: true,           // ✅ Campo opcional
-      defaultValue: DataTypes.NOW // ✅ Valor por defecto: fecha/hora actual
+      field: 'fecha_creacion',
+      allowNull: true,
+      defaultValue: DataTypes.NOW
     }
   }, {
-    // ⚙️ CONFIGURACIÓN DEL MODELO
-    tableName: 'usuarios',       // ✅ Nombre real de la tabla en BD
-    timestamps: false,           // ✅ Desactiva createdAt/updatedAt automáticos
-    
-    // 🪝 HOOKS (GANCHOS) - Se ejecutan automáticamente en ciertos eventos
+    tableName: 'usuarios',
+    timestamps: false,
     hooks: {
-      /**
-       * 🎯 BEFORE CREATE - Se ejecuta ANTES de crear un nuevo usuario
-       * Responsabilidades:
-       * 1. Hashear la contraseña para seguridad
-       * 2. Asegurar fecha de creación
-       */
       beforeCreate: async (user) => {
-        // 🔐 HASH DE CONTRASEÑA - CRÍTICO PARA SEGURIDAD
-        if (user.contrasenia) {
-          console.log('🔐 Hasheando contraseña para nuevo usuario...');
-          try {
-            // ✅ FORMA CORRECTA: Generar salt y hashear
+        try {
+          console.log('🔐 Hook beforeCreate ejecutándose...');
+          console.log('🔐 Contraseña antes del hash:', user.contrasenia);
+          
+          if (user.contrasenia) {
+            // ✅ FORMA CORRECTA - Con salt explícito
             const saltRounds = 10;
-            user.contrasenia = await bcrypt.hash(user.contrasenia, saltRounds);
+            const salt = await bcrypt.genSalt(saltRounds);
+            user.contrasenia = await bcrypt.hash(user.contrasenia, salt);
+            
             console.log('✅ Contraseña hasheada correctamente');
-          } catch (error) {
-            console.error('❌ Error al hashear contraseña:', error);
-            throw error; // ⚠️ Importante: No crear usuario sin contraseña hasheada
+            console.log('🔐 Hash generado (primeros 30 chars):', user.contrasenia.substring(0, 30) + '...');
           }
-        }
-
-        // 📅 FECHA DE CREACIÓN - Backup por si defaultValue falla
-        if (!user.fechaCreacion) {
-          user.fechaCreacion = new Date();
+        } catch (error) {
+          console.error('❌ Error crítico en beforeCreate:', error);
+          throw new Error('No se pudo hashear la contraseña: ' + error.message);
         }
       },
-
-      /**
-       * 🎯 BEFORE UPDATE - Se ejecuta ANTES de actualizar un usuario
-       * Responsabilidades:
-       * 1. Hashear la contraseña solo si fue modificada
-       */
       beforeUpdate: async (user) => {
-        // 🔐 ACTUALIZAR HASH si la contraseña cambió
         if (user.changed('contrasenia')) {
-          console.log('🔐 Actualizando contraseña hasheada...');
+          console.log('🔐 Actualizando contraseña...');
           try {
             const saltRounds = 10;
-            user.contrasenia = await bcrypt.hash(user.contrasenia, saltRounds);
-            console.log('✅ Contraseña actualizada y hasheada correctamente');
+            const salt = await bcrypt.genSalt(saltRounds);
+            user.contrasenia = await bcrypt.hash(user.contrasenia, salt);
+            console.log('✅ Contraseña actualizada correctamente');
           } catch (error) {
             console.error('❌ Error al actualizar contraseña:', error);
-            throw error; // ⚠️ Importante: No actualizar con contraseña sin hashear
+            throw error;
           }
         }
       }
     }
   });
 
-  // 🎯 MÉTODOS DE INSTANCIA - Funciones disponibles en cada objeto User
-  /**
-   * 🔐 VALIDAR CONTRASEÑA
-   * Compara una contraseña en texto plano con el hash almacenado en BD
-   * @param {string} contrasenia - Contraseña en texto plano a validar
-   * @returns {Promise<boolean>} - True si coincide, False si no
-   * 
-   * ⚠️ CRÍTICO: Este método es esencial para el proceso de login
-   */
-  User.prototype.validarContrasenia = function(contrasenia) {
-    return bcrypt.compare(contrasenia, this.contrasenia);
+  // ✅ MÉTODO MEJORADO con logs de debug
+  User.prototype.validarContrasenia = async function(contrasenia) {
+    try {
+      console.log('🔐 validarContrasenia - Iniciando verificación...');
+      console.log('🔐 Contraseña recibida para validar:', contrasenia);
+      console.log('🔐 Hash almacenado en BD:', this.contrasenia);
+      console.log('🔐 Longitud del hash:', this.contrasenia?.length);
+      
+      // Verificar si el hash parece ser un hash bcrypt válido
+      const isBcryptHash = this.contrasenia && this.contrasenia.startsWith('$2b$');
+      console.log('🔐 ¿Parece ser hash bcrypt?:', isBcryptHash);
+      
+      const resultado = await bcrypt.compare(contrasenia, this.contrasenia);
+      console.log('🔐 Resultado de bcrypt.compare:', resultado);
+      
+      return resultado;
+    } catch (error) {
+      console.error('❌ Error en validarContrasenia:', error);
+      return false;
+    }
   };
 
-  // 🏁 RETORNO DEL MODELO COMPLETO
   return User;
 };

@@ -16,25 +16,60 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
+    console.log('=== 🎯 LOGINPAGE DEBUG INICIADO ===');
+    console.log('📍 Frontend URL:', window.location.href);
+    console.log('📤 Credenciales a enviar:', { 
+      correo: email, 
+      contrasenia: password ? '***' : 'VACÍA' 
+    });
+
     try {
+      console.log('🔐 Ejecutando login() del AuthContext...');
+      
       const result = await login({ 
         correo: email, 
         contrasenia: password 
       });
 
-      if (result.success) {
-        // Redirigir según el rol
+      console.log('✅ Resultado recibido del AuthContext:', result);
+      console.log('🔍 Estructura de result:', {
+        success: result?.success,
+        hasData: !!result?.data,
+        hasUser: !!result?.data?.user,
+        userRol: result?.data?.user?.rol
+      });
+
+      // ✅ VERIFICACIÓN ROBUSTA DE LA ESTRUCTURA DE DATOS
+      if (result && result.success && result.data && result.data.user) {
+        console.log('🎉 Login EXITOSO en LoginPage');
+        console.log('👤 Datos del usuario:', result.data.user);
+        console.log('🎯 Rol del usuario:', result.data.user.rol);
+        
+        // ✅ REDIRECCIÓN SEGURA
         if (result.data.user.rol === 'Administrador') {
-          navigate('/admin/dashboard');
+          console.log('🚀 Redirigiendo a /admin/dashboard');
+          navigate('/admin/dashboard', { replace: true });
+        } else if (result.data.user.rol === 'Inquilino') {
+          console.log('🚀 Redirigiendo a /tenant/dashboard');
+          navigate('/tenant/dashboard', { replace: true });
         } else {
-          navigate('/tenant/dashboard');
+          console.error('❌ Rol no reconocido:', result.data.user.rol);
+          setError('Rol de usuario no reconocido');
         }
       } else {
-        setError(result.error);
+        console.log('❌ Estructura de respuesta inválida:', result);
+        setError(result?.error || 'Error en la respuesta del servidor');
       }
     } catch (err) {
+      console.error('💥 Error CAPTURADO en handleSubmit:', err);
+      console.error('💥 Detalles del error:', {
+        message: err.message,
+        stack: err.stack,
+        response: err.response?.data
+      });
       setError('Error al conectar con el servidor');
     } finally {
+      console.log('🏁 Finalizando handleSubmit');
       setLoading(false);
     }
   };
