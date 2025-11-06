@@ -38,51 +38,84 @@ const getDashboardData = async (req, res) => {
     }
 
     try {
-      totalDepartments = await Department.count({
-        include: [{
-          model: Building,
-          where: { idAdministrador: adminId }
-        }]
+      // ✅ CORREGIDO: Primero obtener IDs de edificios del admin
+      const buildingsIds = await Building.findAll({
+        where: { idAdministrador: adminId },
+        attributes: ['idEdificio']
       });
+      const buildingIdsList = buildingsIds.map(b => b.idEdificio);
+      
+      console.log('🏢 IDs de edificios del admin:', buildingIdsList); // ✅ LOG
+      
+      if (buildingIdsList.length > 0) {
+        totalDepartments = await Department.count({
+          where: { idEdificio: buildingIdsList }
+        });
+      }
+      
       console.log('🏠 Total departamentos:', totalDepartments);
     } catch (error) {
-      console.error('Error contando departamentos:', error);
+      console.error('❌ Error contando departamentos:', error);
     }
 
     try {
-      availableDepartments = await Department.count({
-        include: [{
-          model: Building,
-          where: { idAdministrador: adminId }
-        }],
-        where: { estado: 'Disponible' }
+      const buildingsIds = await Building.findAll({
+        where: { idAdministrador: adminId },
+        attributes: ['idEdificio']
       });
+      const buildingIdsList = buildingsIds.map(b => b.idEdificio);
+      
+      if (buildingIdsList.length > 0) {
+        availableDepartments = await Department.count({
+          where: { 
+            idEdificio: buildingIdsList,
+            estado: 'Disponible' 
+          }
+        });
+      }
+      console.log('✅ Departamentos disponibles:', availableDepartments); // ✅ LOG
     } catch (error) {
-      console.error('Error contando departamentos disponibles:', error);
+      console.error('❌ Error contando departamentos disponibles:', error);
     }
 
     try {
-      occupiedDepartments = await Department.count({
-        include: [{
-          model: Building,
-          where: { idAdministrador: adminId }
-        }],
-        where: { estado: 'Ocupado' }
+      const buildingsIds = await Building.findAll({
+        where: { idAdministrador: adminId },
+        attributes: ['idEdificio']
       });
+      const buildingIdsList = buildingsIds.map(b => b.idEdificio);
+      
+      if (buildingIdsList.length > 0) {
+        occupiedDepartments = await Department.count({
+          where: { 
+            idEdificio: buildingIdsList,
+            estado: 'Ocupado' 
+          }
+        });
+      }
+      console.log('✅ Departamentos ocupados:', occupiedDepartments); // ✅ LOG
     } catch (error) {
-      console.error('Error contando departamentos ocupados:', error);
+      console.error('❌ Error contando departamentos ocupados:', error);
     }
 
     try {
-      maintenanceDepartments = await Department.count({
-        include: [{
-          model: Building,
-          where: { idAdministrador: adminId }
-        }],
-        where: { estado: 'En Mantenimiento' }
+      const buildingsIds = await Building.findAll({
+        where: { idAdministrador: adminId },
+        attributes: ['idEdificio']
       });
+      const buildingIdsList = buildingsIds.map(b => b.idEdificio);
+      
+      if (buildingIdsList.length > 0) {
+        maintenanceDepartments = await Department.count({
+          where: { 
+            idEdificio: buildingIdsList,
+            estado: 'En Mantenimiento' 
+          }
+        });
+      }
+      console.log('✅ Departamentos en mantenimiento:', maintenanceDepartments); // ✅ LOG
     } catch (error) {
-      console.error('Error contando departamentos en mantenimiento:', error);
+      console.error('❌ Error contando departamentos en mantenimiento:', error);
     }
 
     try {
