@@ -372,17 +372,33 @@ const DepartmentsList = () => {
               : 'Configura tu primer edificio'}
           </p>
         </div>
-        <button 
-          onClick={() => setShowBatchForm(true)}
-          disabled={buildings.length === 0}
-          className={`px-4 py-2 rounded-lg transition-colors ${
-            buildings.length === 0
-              ? 'bg-gray-400 cursor-not-allowed text-white'
-              : 'bg-blue-500 hover:bg-blue-600 text-white'
-          }`}
-        >
-          {buildings.length === 0 ? 'Crea un edificio primero' : '+ Crear en Lote'}
-        </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => {
+              setSelectedDepartment(null);
+              setShowEditForm(true);
+            }}
+            disabled={buildings.length === 0}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              buildings.length === 0
+                ? 'bg-gray-400 cursor-not-allowed text-white'
+                : 'bg-green-500 hover:bg-green-600 text-white'
+            }`}
+          >
+            {buildings.length === 0 ? 'Crea un edificio primero' : '+ Crear Individual'}
+          </button>
+          <button 
+            onClick={() => setShowBatchForm(true)}
+            disabled={buildings.length === 0}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              buildings.length === 0
+                ? 'bg-gray-400 cursor-not-allowed text-white'
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
+          >
+            {buildings.length === 0 ? 'Crea un edificio primero' : '+ Crear en Lote'}
+          </button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -590,7 +606,7 @@ const DepartmentsList = () => {
         />
       )}
 
-      {showEditForm && selectedDepartment && (
+      {showEditForm && (
         <DepartmentForm 
           department={selectedDepartment}
           isOpen={showEditForm}

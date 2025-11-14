@@ -4,7 +4,7 @@ import { adminAPI } from '../../../services/api/admin';
 import Modal from '../../../components/ui/Modal';
 import Button from '../../../components/ui/Button';
 
-const DepartmentForm = ({ isOpen, onClose, onSuccess, editData = null }) => {
+const DepartmentForm = ({ isOpen, onClose, onSuccess, editData = null, department = null }) => {
   const [loading, setLoading] = useState(false);
   const [buildings, setBuildings] = useState([]);
   const [formData, setFormData] = useState({
@@ -23,7 +23,16 @@ const DepartmentForm = ({ isOpen, onClose, onSuccess, editData = null }) => {
       try {
         const response = await adminAPI.getBuildings();
         if (response.data.success) {
-          setBuildings(response.data.data);
+          const buildingsList = response.data.data;
+          setBuildings(buildingsList);
+          
+          // Si es modo crear (no editData ni department) y hay edificios, pre-seleccionar el primero
+          if (!editData && !department && buildingsList.length > 0 && !formData.idEdificio) {
+            setFormData(prev => ({
+              ...prev,
+              idEdificio: buildingsList[0].idEdificio
+            }));
+          }
         }
       } catch (error) {
         console.error('Error cargando edificios:', error);
@@ -33,19 +42,20 @@ const DepartmentForm = ({ isOpen, onClose, onSuccess, editData = null }) => {
     if (isOpen) {
       loadBuildings();
     }
-  }, [isOpen]);
+  }, [isOpen, editData, department]);
 
   // Si estamos editando, cargar los datos
   useEffect(() => {
-    if (editData && isOpen) {
+    const dataToEdit = editData || department;
+    if (dataToEdit && isOpen) {
       setFormData({
-        numero: editData.numero || '',
-        piso: editData.piso || '',
-        metrosCuadrados: editData.metrosCuadrados || '',
-        habitaciones: editData.habitaciones || 1,
-        banios: editData.banios || 1,
-        idEdificio: editData.idEdificio || '',
-        estado: editData.estado || 'Disponible'
+        numero: dataToEdit.numero || '',
+        piso: dataToEdit.piso || '',
+        metrosCuadrados: dataToEdit.metrosCuadrados || '',
+        habitaciones: dataToEdit.habitaciones || 1,
+        banios: dataToEdit.banios || 1,
+        idEdificio: dataToEdit.idEdificio || '',
+        estado: dataToEdit.estado || 'Disponible'
       });
     } else if (isOpen) {
       // Reset form cuando se abre para crear nuevo
@@ -59,7 +69,7 @@ const DepartmentForm = ({ isOpen, onClose, onSuccess, editData = null }) => {
         estado: 'Disponible'
       });
     }
-  }, [editData, isOpen]);
+  }, [editData, department, isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -74,9 +84,10 @@ const DepartmentForm = ({ isOpen, onClose, onSuccess, editData = null }) => {
     setLoading(true);
 
     try {
-      if (editData) {
+      const dataToEdit = editData || department;
+      if (dataToEdit) {
         // Actualizar departamento existente
-        await adminAPI.updateDepartment(editData.idDepartamento, formData);
+        await adminAPI.updateDepartment(dataToEdit.idDepartamento, formData);
       } else {
         // Crear departamento individual
         const batchData = {
@@ -107,7 +118,7 @@ const DepartmentForm = ({ isOpen, onClose, onSuccess, editData = null }) => {
     <Modal 
       isOpen={isOpen} 
       onClose={onClose}
-      title={editData ? 'Editar Departamento' : 'Nuevo Departamento'}
+      title={(editData || department) ? 'Editar Departamento' : 'Nuevo Departamento'}
       size="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4">

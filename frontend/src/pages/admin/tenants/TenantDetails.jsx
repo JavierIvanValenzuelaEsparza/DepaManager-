@@ -13,14 +13,17 @@ const TenantDetails = () => {
   useEffect(() => {
     const fetchTenantDetails = async () => {
       try {
+        console.log('🔍 Cargando detalles del inquilino ID:', id);
         const response = await adminAPI.getTenantDetails(id);
+        console.log('📦 Respuesta recibida:', response.data);
         if (response.data.success) {
+          console.log('✅ Datos del inquilino:', response.data.data);
           setTenant(response.data.data);
         } else {
-          console.error('Error al cargar detalles del inquilino');
+          console.error('❌ Error al cargar detalles del inquilino');
         }
       } catch (error) {
-        console.error('Error:', error);
+        console.error('❌ Error en la petición:', error);
       } finally {
         setLoading(false);
       }
@@ -171,6 +174,10 @@ const TenantDetails = () => {
                     <div>
                       <label className="text-sm font-medium text-gray-600">Piso</label>
                       <p className="text-gray-900">Piso {tenant.departamento.piso}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Metros Cuadrados</label>
+                      <p className="text-gray-900">{tenant.departamento.metrosCuadrados || '--'} m²</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-600">Edificio</label>

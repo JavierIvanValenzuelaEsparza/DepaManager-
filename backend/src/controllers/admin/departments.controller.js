@@ -5,19 +5,10 @@ const createDepartmentsBatch = async (req, res) => {
   const transaction = await sequelize.transaction();
   
   try {
-    const { idEdificio, numeroPisos, desdeNumero, hastaNumero, departamentosPorPiso } = req.body;
+    const { idEdificio, numeroPisos, desdeNumero, hastaNumero, departamentosPorPiso, departamentos } = req.body;
     const adminId = req.user.idUsuario;
 
-    console.log('🔍 Datos recibidos para creación en lote:', req.body);
-
-    // Validaciones básicas
-    if (!idEdificio || !numeroPisos || !desdeNumero || !hastaNumero || !departamentosPorPiso) {
-      await transaction.rollback();
-      return res.status(400).json({
-        success: false,
-        message: 'Todos los campos son requeridos'
-      });
-    }
+    console.log('🔍 Datos recibidos para creación:', req.body);
 
     // Verificar que el edificio existe y pertenece al administrador
     const edificio = await Building.findOne({
@@ -36,43 +27,76 @@ const createDepartmentsBatch = async (req, res) => {
       });
     }
 
-    const totalDepartamentos = parseInt(numeroPisos) * parseInt(departamentosPorPiso);
-    const rangoNumeros = parseInt(hastaNumero) - parseInt(desdeNumero) + 1;
+    let departamentosCreados = [];
 
-    if (totalDepartamentos !== rangoNumeros) {
-      await transaction.rollback();
-      return res.status(400).json({
-        success: false,
-        message: `El rango de números (${rangoNumeros}) no coincide con el total de departamentos (${totalDepartamentos})`
-      });
-    }
-
-    // Generar departamentos
-    const departamentosCreados = [];
-    let numeroActual = parseInt(desdeNumero);
-
-    for (let piso = 1; piso <= numeroPisos; piso++) {
-      for (let deptPorPiso = 1; deptPorPiso <= departamentosPorPiso; deptPorPiso++) {
-        if (numeroActual > hastaNumero) break;
-
+    // Modo 1: Crear departamento individual (array de departamentos)
+    if (departamentos && Array.isArray(departamentos)) {
+      console.log('📝 Modo: Creación individual');
+      
+      for (const deptData of departamentos) {
         const departamentoData = {
           idEdificio: parseInt(idEdificio),
-          numero: numeroActual.toString(),
-          piso: piso,
-          metrosCuadrados: 60.00,
-          habitaciones: 2,
-          banios: 1,
-          estado: 'Disponible',
+          numero: deptData.numero.toString(),
+          piso: parseInt(deptData.piso),
+          metrosCuadrados: parseFloat(deptData.metrosCuadrados) || null,
+          habitaciones: parseInt(deptData.habitaciones) || 2,
+          banios: parseInt(deptData.banios) || 1,
+          estado: deptData.estado || 'Disponible',
           idInquilino: null
         };
 
-        console.log(`🏠 Creando departamento: ${departamentoData.numero} - Piso ${piso}`);
+        console.log(`🏠 Creando departamento: ${departamentoData.numero}`);
 
         const nuevoDepartamento = await Department.create(departamentoData, { transaction });
         departamentosCreados.push(nuevoDepartamento);
-
-        numeroActual++;
       }
+    }
+    // Modo 2: Crear en lote (parámetros numéricos)
+    else if (numeroPisos && desdeNumero && hastaNumero && departamentosPorPiso) {
+      console.log('📦 Modo: Creación en lote');
+
+      const totalDepartamentos = parseInt(numeroPisos) * parseInt(departamentosPorPiso);
+      const rangoNumeros = parseInt(hastaNumero) - parseInt(desdeNumero) + 1;
+
+      if (totalDepartamentos !== rangoNumeros) {
+        await transaction.rollback();
+        return res.status(400).json({
+          success: false,
+          message: `El rango de números (${rangoNumeros}) no coincide con el total de departamentos (${totalDepartamentos})`
+        });
+      }
+
+      let numeroActual = parseInt(desdeNumero);
+
+      for (let piso = 1; piso <= numeroPisos; piso++) {
+        for (let deptPorPiso = 1; deptPorPiso <= departamentosPorPiso; deptPorPiso++) {
+          if (numeroActual > hastaNumero) break;
+
+          const departamentoData = {
+            idEdificio: parseInt(idEdificio),
+            numero: numeroActual.toString(),
+            piso: piso,
+            metrosCuadrados: 60.00,
+            habitaciones: 2,
+            banios: 1,
+            estado: 'Disponible',
+            idInquilino: null
+          };
+
+          console.log(`🏠 Creando departamento: ${departamentoData.numero} - Piso ${piso}`);
+
+          const nuevoDepartamento = await Department.create(departamentoData, { transaction });
+          departamentosCreados.push(nuevoDepartamento);
+
+          numeroActual++;
+        }
+      }
+    } else {
+      await transaction.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Datos insuficientes. Proporciona "departamentos" o los parámetros de lote.'
+      });
     }
 
     // Actualizar contador en el edificio

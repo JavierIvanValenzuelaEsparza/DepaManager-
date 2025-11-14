@@ -437,60 +437,87 @@ const getTenantDetails = async (req, res) => {
     const adminId = req.user.idUsuario;
     const tenantId = req.params.id;
 
+    // Buscar inquilino sin includes complejos primero
     const inquilino = await User.findOne({
       where: { 
         idUsuario: tenantId,
         rol: 'Inquilino'
       },
-      attributes: { exclude: ['contrasenia'] },
-      include: [
-        {
-          model: Contract,
-          as: 'contratos',
-          include: [
-            {
-              model: Department,
-              as: 'departamento',
-              attributes: ['idDepartamento', 'numero', 'piso', 'metrosCuadrados']
-            }
-          ]
-        },
-        {
-          model: Payment,
-          as: 'pagos',
-          limit: 10,
-          order: [['fechaVencimiento', 'DESC']]
-        }
-      ]
+      attributes: { exclude: ['contrasenia'] }
     });
 
     if (!inquilino) {
+      console.log('❌ Inquilino no encontrado con ID:', tenantId);
       return res.status(404).json({
         success: false,
         message: 'Inquilino no encontrado'
       });
     }
 
-    // Obtener el departamento del inquilino (solo uno)
-    const department = await Department.findOne({
-      where: { idInquilino: tenantId },
-      include: [{
-        model: Building,
-        as: 'edificio',
-        where: { idAdministrador: adminId },
-        attributes: ['idEdificio', 'nombre', 'direccion']
-      }],
-      attributes: ['idDepartamento', 'numero', 'piso', 'metrosCuadrados']
-    });
-    
-    // Agregar el departamento al objeto inquilino
-    inquilino.dataValues.departamento = department;
+    console.log('✅ Inquilino encontrado:', inquilino.nombreCompleto);
 
-    console.log('✅ Detalles del inquilino obtenidos:', inquilino.nombreCompleto);
+    // Cargar contratos
+    let contratos = [];
+    try {
+      contratos = await Contract.findAll({
+        where: { idInquilino: tenantId },
+        include: [
+          {
+            model: Department,
+            as: 'departamento',
+            attributes: ['idDepartamento', 'numero', 'piso', 'metrosCuadrados']
+          }
+        ]
+      });
+      console.log('📄 Contratos encontrados:', contratos.length);
+    } catch (contractError) {
+      console.log('⚠️ Error cargando contratos:', contractError.message);
+    }
+
+    // Cargar pagos
+    let pagos = [];
+    try {
+      pagos = await Payment.findAll({
+        where: { idInquilino: tenantId },
+        order: [['fechaVencimiento', 'DESC']],
+        limit: 10
+      });
+      console.log('💰 Pagos encontrados:', pagos.length);
+    } catch (paymentError) {
+      console.log('⚠️ Error cargando pagos:', paymentError.message);
+    }
+
+    // Cargar departamento
+    let department = null;
+    try {
+      department = await Department.findOne({
+        where: { idInquilino: tenantId },
+        include: [{
+          model: Building,
+          as: 'edificio',
+          required: false,
+          attributes: ['idEdificio', 'nombre', 'direccion']
+        }],
+        attributes: ['idDepartamento', 'numero', 'piso', 'metrosCuadrados']
+      });
+      console.log('🏠 Departamento encontrado:', department ? 'Sí' : 'No');
+    } catch (deptError) {
+      console.log('⚠️ Error cargando departamento:', deptError.message);
+    }
+    
+    // Construir respuesta
+    const responseData = {
+      ...inquilino.toJSON(),
+      contratos: contratos,
+      pagos: pagos,
+      departamento: department
+    };
+
+    console.log('✅ Detalles del inquilino preparados');
 
     res.json({
       success: true,
-      data: inquilino
+      data: responseData
     });
 
   } catch (error) {

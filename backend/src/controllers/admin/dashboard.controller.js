@@ -275,7 +275,7 @@ const getDashboardData = async (req, res) => {
           {
             model: Department,
             as: 'departamento',
-            attributes: ['numeroDepartamento']
+            attributes: ['numero']
           }
         ],
         where: {
@@ -293,7 +293,7 @@ const getDashboardData = async (req, res) => {
           icon: '📄',
           color: 'purple',
           title: 'Contrato creado',
-          description: `${contract.inquilino?.nombreCompleto || 'Inquilino'} - Depto ${contract.departamento?.numeroDepartamento || 'N/A'}`,
+          description: `${contract.inquilino?.nombreCompleto || 'Inquilino'} - Depto ${contract.departamento?.numero || 'N/A'}`,
           date: contract.createdAt,
           timestamp: new Date(contract.createdAt).getTime()
         });
