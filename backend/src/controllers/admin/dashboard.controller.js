@@ -1,4 +1,4 @@
-const { User, Building, Department, Contract, Payment, Incident, Provider } = require('../../models');
+const { User, Building, Department, Contract, Payment, Incident, Provider, Applicant } = require('../../models');
 const { Op } = require('sequelize');
 
 const getDashboardData = async (req, res) => {
@@ -193,12 +193,79 @@ const getDashboardData = async (req, res) => {
       console.error('Error calculando ocupación:', error);
     }
 
-    // Obtener actividades recientes
-    let recentPayments = [];
-    let recentIncidents = [];
+    // Obtener actividades recientes (últimos 7 días)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    let recentActivities = [];
 
     try {
-      recentPayments = await Payment.findAll({
+      // Pagos recientes
+      const recentPayments = await Payment.findAll({
+        include: [
+          {
+            model: User,
+            as: 'inquilino',
+            attributes: ['nombreCompleto']
+          }
+        ],
+        where: {
+          estado: 'Pagado',
+          fechaPago: {
+            [Op.gte]: sevenDaysAgo
+          }
+        },
+        order: [['fechaPago', 'DESC']],
+        limit: 10
+      });
+
+      recentPayments.forEach(payment => {
+        recentActivities.push({
+          type: 'payment',
+          icon: '💰',
+          color: 'green',
+          title: 'Pago recibido',
+          description: `${payment.inquilino?.nombreCompleto || 'Inquilino'} - $${payment.monto}`,
+          date: payment.fechaPago,
+          timestamp: new Date(payment.fechaPago).getTime()
+        });
+      });
+    } catch (error) {
+      console.error('Error obteniendo pagos recientes:', error);
+    }
+
+    try {
+      // Inquilinos nuevos
+      const recentTenants = await User.findAll({
+        where: {
+          rol: 'Inquilino',
+          createdAt: {
+            [Op.gte]: sevenDaysAgo
+          }
+        },
+        order: [['createdAt', 'DESC']],
+        limit: 10,
+        attributes: ['idUsuario', 'nombreCompleto', 'createdAt']
+      });
+
+      recentTenants.forEach(tenant => {
+        recentActivities.push({
+          type: 'tenant',
+          icon: '👤',
+          color: 'blue',
+          title: 'Nuevo inquilino registrado',
+          description: tenant.nombreCompleto,
+          date: tenant.createdAt,
+          timestamp: new Date(tenant.createdAt).getTime()
+        });
+      });
+    } catch (error) {
+      console.error('Error obteniendo inquilinos recientes:', error);
+    }
+
+    try {
+      // Contratos creados
+      const recentContracts = await Contract.findAll({
         include: [
           {
             model: User,
@@ -206,24 +273,67 @@ const getDashboardData = async (req, res) => {
             attributes: ['nombreCompleto']
           },
           {
-            model: Contract,
-            as: 'contrato',
-            attributes: ['idContrato']
+            model: Department,
+            as: 'departamento',
+            attributes: ['numeroDepartamento']
           }
         ],
         where: {
-          estado: 'Pagado'
+          createdAt: {
+            [Op.gte]: sevenDaysAgo
+          }
         },
-        order: [['fechaPago', 'DESC']],
-        limit: 5
+        order: [['createdAt', 'DESC']],
+        limit: 10
       });
-      console.log('✅ Pagos recientes obtenidos:', recentPayments.length);
+
+      recentContracts.forEach(contract => {
+        recentActivities.push({
+          type: 'contract',
+          icon: '📄',
+          color: 'purple',
+          title: 'Contrato creado',
+          description: `${contract.inquilino?.nombreCompleto || 'Inquilino'} - Depto ${contract.departamento?.numeroDepartamento || 'N/A'}`,
+          date: contract.createdAt,
+          timestamp: new Date(contract.createdAt).getTime()
+        });
+      });
     } catch (error) {
-      console.error('Error obteniendo pagos recientes:', error);
+      console.error('Error obteniendo contratos recientes:', error);
     }
 
     try {
-      recentIncidents = await Incident.findAll({
+      // Postulantes aprobados
+      const approvedApplicants = await Applicant.findAll({
+        where: {
+          estado: 'Aprobado',
+          fecha_aprobacion: {
+            [Op.gte]: sevenDaysAgo
+          }
+        },
+        order: [['fecha_aprobacion', 'DESC']],
+        limit: 10,
+        attributes: ['id_postulante', 'nombre_completo', 'fecha_aprobacion']
+      });
+
+      approvedApplicants.forEach(applicant => {
+        recentActivities.push({
+          type: 'applicant',
+          icon: '✅',
+          color: 'emerald',
+          title: 'Postulante aprobado',
+          description: applicant.nombre_completo,
+          date: applicant.fecha_aprobacion,
+          timestamp: new Date(applicant.fecha_aprobacion).getTime()
+        });
+      });
+    } catch (error) {
+      console.error('Error obteniendo postulantes aprobados:', error);
+    }
+
+    try {
+      // Incidencias nuevas
+      const recentIncidents = await Incident.findAll({
         include: [
           {
             model: User,
@@ -231,13 +341,36 @@ const getDashboardData = async (req, res) => {
             attributes: ['nombreCompleto']
           }
         ],
+        where: {
+          fechaReporte: {
+            [Op.gte]: sevenDaysAgo
+          }
+        },
         order: [['fechaReporte', 'DESC']],
-        limit: 5
+        limit: 10
       });
-      console.log('✅ Incidencias recientes obtenidas:', recentIncidents.length);
+
+      recentIncidents.forEach(incident => {
+        recentActivities.push({
+          type: 'incident',
+          icon: '🚨',
+          color: 'red',
+          title: 'Nueva incidencia',
+          description: `${incident.inquilino?.nombreCompleto || 'Inquilino'} - ${incident.tipo}`,
+          date: incident.fechaReporte,
+          timestamp: new Date(incident.fechaReporte).getTime()
+        });
+      });
     } catch (error) {
       console.error('Error obteniendo incidencias recientes:', error);
     }
+
+    // Ordenar todas las actividades por fecha (más reciente primero) y limitar a 5
+    recentActivities.sort((a, b) => b.timestamp - a.timestamp);
+    recentActivities = recentActivities.slice(0, 5);
+
+    // Eliminar el timestamp antes de enviar
+    recentActivities.forEach(activity => delete activity.timestamp);
 
     const dashboardData = {
       summary: {
@@ -253,10 +386,7 @@ const getDashboardData = async (req, res) => {
         monthlyRevenue,
         occupancyRate
       },
-      recentActivities: {
-        payments: recentPayments,
-        incidents: recentIncidents
-      }
+      recentActivities
     };
 
     console.log('✅ Dashboard data obtenido exitosamente');

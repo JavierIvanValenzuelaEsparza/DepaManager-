@@ -57,7 +57,7 @@ const Dashboard = () => {
 
   const { summary, recentActivities } = dashboardData || { 
     summary: {}, 
-    recentActivities: { payments: [], incidents: [] } 
+    recentActivities: []
   };
 
   return (
@@ -139,24 +139,42 @@ const Dashboard = () => {
 
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Actividad Reciente</h3>
+          <p className="text-xs text-gray-500 mb-4">Últimos 7 días</p>
           <div className="space-y-3">
-            {recentActivities.payments && recentActivities.payments.length > 0 ? (
-              recentActivities.payments.slice(0, 3).map(payment => (
-                <div key={payment.idPago} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                      <span className="text-green-600 text-sm">💰</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{payment.inquilino?.nombreCompleto || 'N/A'}</p>
-                      <p className="text-xs text-gray-500">Pago recibido</p>
+            {recentActivities && recentActivities.length > 0 ? (
+              recentActivities.map((activity, index) => {
+                const colorClasses = {
+                  green: 'bg-green-100 text-green-600',
+                  blue: 'bg-blue-100 text-blue-600',
+                  purple: 'bg-purple-100 text-purple-600',
+                  emerald: 'bg-emerald-100 text-emerald-600',
+                  red: 'bg-red-100 text-red-600'
+                };
+                
+                return (
+                  <div key={index} className="flex items-start justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex items-start flex-1">
+                      <div className={`w-8 h-8 ${colorClasses[activity.color] || 'bg-gray-100 text-gray-600'} rounded-full flex items-center justify-center mr-3 flex-shrink-0`}>
+                        <span className="text-sm">{activity.icon}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800">{activity.title}</p>
+                        <p className="text-xs text-gray-600 truncate">{activity.description}</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(activity.date).toLocaleDateString('es-ES', {
+                            day: '2-digit',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <span className="text-sm font-semibold text-green-600">${payment.monto}</span>
-                </div>
-              ))
+                );
+              })
             ) : (
-              <p className="text-gray-500 text-sm text-center py-4">No hay actividad reciente</p>
+              <p className="text-gray-500 text-sm text-center py-8">No hay actividad reciente en los últimos 7 días</p>
             )}
           </div>
         </div>
