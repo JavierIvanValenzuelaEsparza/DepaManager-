@@ -2,16 +2,30 @@
 import React, { useEffect, useState } from 'react';
 import { adminAPI } from '../../../services/api/admin';
 import TenantForm from './TenantForm';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const TenantsList = () => {
+  const location = useLocation();
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingTenant, setEditingTenant] = useState(null);
+  const [prefilledData, setPrefilledData] = useState(null); // ✅ Nuevo estado para datos prellenados
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos');
   const navigate = useNavigate();
+
+  // ✅ Verificar si vienen datos prellenados desde postulantes
+  useEffect(() => {
+    if (location.state?.prefilledData) {
+      setPrefilledData(location.state.prefilledData); // ✅ Guardar datos prellenados
+      setEditingTenant(null); // ✅ Asegurar que NO es modo edición
+      setShowForm(true);
+      
+      // Limpiar el state para que no se abra cada vez que se visite la página
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const fetchTenants = async () => {
     try {
@@ -35,16 +49,19 @@ const TenantsList = () => {
     fetchTenants();
     setShowForm(false);
     setEditingTenant(null);
+    setPrefilledData(null); // ✅ Limpiar datos prellenados
   };
 
   const handleEdit = (tenant) => {
     setEditingTenant(tenant);
+    setPrefilledData(null); // ✅ Limpiar datos prellenados cuando se edita
     setShowForm(true);
   };
 
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingTenant(null);
+    setPrefilledData(null); // ✅ Limpiar datos prellenados al cerrar
   };
 
   const handleDelete = async (tenantId, tenantName) => {
@@ -362,7 +379,8 @@ const TenantsList = () => {
         isOpen={showForm}
         onClose={handleCloseForm}
         onSuccess={handleCreateSuccess}
-        editData={editingTenant}
+        editData={editingTenant} // ✅ Solo se pasa cuando estamos editando
+        prefilledData={prefilledData} // ✅ Nuevo prop para datos prellenados
       />
     </div>
   );

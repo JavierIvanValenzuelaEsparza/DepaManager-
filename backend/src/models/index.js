@@ -1,6 +1,7 @@
 // backend/src/models/index.js
 const sequelize = require('../config/sequelize');
 const { DataTypes } = require('sequelize');
+const Applicant = require('./applicant')(sequelize, DataTypes);
 
 // Cargar modelos
 const User = require('./user')(sequelize, DataTypes);
@@ -133,6 +134,7 @@ const db = {
   Contract,
   Notification,
   Provider,
+  Applicant,
   sequelize,
   Sequelize: require('sequelize')
 };

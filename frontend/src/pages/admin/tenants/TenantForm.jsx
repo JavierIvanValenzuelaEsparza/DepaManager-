@@ -4,7 +4,7 @@ import { adminAPI } from '../../../services/api/admin';
 import Modal from '../../../components/ui/Modal';
 import Button from '../../../components/ui/Button';
 
-const TenantForm = ({ isOpen, onClose, onSuccess, editData = null }) => {
+const TenantForm = ({ isOpen, onClose, onSuccess, editData = null, prefilledData = null }) => {
   const [loading, setLoading] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(false);
@@ -21,7 +21,56 @@ const TenantForm = ({ isOpen, onClose, onSuccess, editData = null }) => {
     fechaFinContrato: '',
     montoMensual: ''
   });
-  
+
+  // ✅ Separar la lógica de edición y prellenado
+  useEffect(() => {
+    if (isOpen) {
+      if (editData) {
+        // 📝 MODO EDICIÓN - Cargar datos del inquilino existente
+        setFormData({
+          nombreCompleto: editData.nombreCompleto || '',
+          correo: editData.correo || '',
+          contrasenia: '', // No mostrar contraseña al editar
+          telefono: editData.telefono || '',
+          dni: editData.dni || '',
+          fechaNacimiento: editData.fechaNacimiento || '',
+          idDepartamento: editData.idDepartamento || '',
+          fechaInicioContrato: editData.fechaInicioContrato || '',
+          fechaFinContrato: editData.fechaFinContrato || '',
+          montoMensual: editData.montoMensual || ''
+        });
+      } else if (prefilledData) {
+        // ✨ MODO NUEVO CON DATOS PRELLENADOS - Datos del postulante aprobado
+        setFormData({
+          nombreCompleto: prefilledData.nombreCompleto || prefilledData.nombre_completo || '',
+          correo: prefilledData.correo || '',
+          contrasenia: '', // Debe ingresar contraseña nueva
+          telefono: prefilledData.telefono || '',
+          dni: prefilledData.dni || '',
+          fechaNacimiento: '',
+          idDepartamento: '',
+          fechaInicioContrato: '',
+          fechaFinContrato: '',
+          montoMensual: prefilledData.montoMensual || prefilledData.monto_alquiler || ''
+        });
+      } else {
+        // 🆕 MODO NUEVO VACÍO
+        setFormData({
+          nombreCompleto: '',
+          correo: '',
+          contrasenia: '',
+          telefono: '',
+          dni: '',
+          fechaNacimiento: '',
+          idDepartamento: '',
+          fechaInicioContrato: '',
+          fechaFinContrato: '',
+          montoMensual: ''
+        });
+      }
+    }
+  }, [editData, prefilledData, isOpen]);
+
   // Cargar departamentos disponibles
   useEffect(() => {
     const loadDepartments = async () => {
@@ -66,38 +115,6 @@ const TenantForm = ({ isOpen, onClose, onSuccess, editData = null }) => {
       loadDepartments();
     }
   }, [isOpen, editData]);
-
-  // Si estamos editando, cargar los datos
-  useEffect(() => {
-    if (editData && isOpen) {
-      setFormData({
-        nombreCompleto: editData.nombreCompleto || '',
-        correo: editData.correo || '',
-        contrasenia: '', // No cargar contraseña por seguridad
-        telefono: editData.telefono || '',
-        dni: editData.dni || '',
-        fechaNacimiento: editData.fechaNacimiento || '',
-        idDepartamento: editData.departamento?.idDepartamento || '',
-        fechaInicioContrato: editData.fechaInicioContrato || '',
-        fechaFinContrato: editData.fechaFinContrato || '',
-        montoMensual: editData.contrato?.montoMensual || ''
-      });
-    } else if (isOpen) {
-      // Reset form cuando se abre para crear nuevo
-      setFormData({
-        nombreCompleto: '',
-        correo: '',
-        contrasenia: '',
-        telefono: '',
-        dni: '',
-        fechaNacimiento: '',
-        idDepartamento: '',
-        fechaInicioContrato: '',
-        fechaFinContrato: '',
-        montoMensual: ''
-      });
-    }
-  }, [editData, isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -147,10 +164,30 @@ const TenantForm = ({ isOpen, onClose, onSuccess, editData = null }) => {
     <Modal 
       isOpen={isOpen} 
       onClose={onClose}
-      title={editData ? 'Editar Inquilino' : 'Nuevo Inquilino'}
+      title={editData ? 'Editar Inquilino' : 'Nuevo Inquilino'} // ✅ Título correcto
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* ✅ Mostrar alerta cuando vienen datos prellenados */}
+        {prefilledData && !editData && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-700">
+                  📋 <strong>Datos prellenados desde el postulante aprobado</strong>
+                  <br />
+                  <span className="text-xs">Completa los campos faltantes para crear el nuevo inquilino.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Información Personal */}
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Información Personal</h3>
@@ -188,7 +225,7 @@ const TenantForm = ({ isOpen, onClose, onSuccess, editData = null }) => {
             {!editData && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Contraseña *
+                  Contraseña * {prefilledData && <span className="text-red-500 text-xs">(Requerida)</span>}
                 </label>
                 <input
                   type="password"

@@ -9,6 +9,7 @@ const buildingsController = require('../controllers/admin/buildings.controller')
 const tenantsController = require('../controllers/admin/tenants.controller');
 const incidentsController = require('../controllers/admin/incidents.controller'); // ✅ NUEVO
 const providersController = require('../controllers/admin/providers.controller'); // ✅ NUEVO
+const applicantController = require('../controllers/admin/applicants.controller');
 
 console.log('✅ Controladores cargados correctamente');
 
@@ -48,6 +49,19 @@ router.get('/proveedores/:id', verifyToken, verifyAdmin, providersController.get
 router.post('/proveedores', verifyToken, verifyAdmin, providersController.createProvider);
 router.put('/proveedores/:id', verifyToken, verifyAdmin, providersController.updateProvider);
 router.delete('/proveedores/:id', verifyToken, verifyAdmin, providersController.deleteProvider);
+
+// ==================== ✅ RUTAS COMPLETAS DE POSTULANTES ====================
+router.get('/applicants', verifyToken, verifyAdmin, applicantController.getAllApplicants);
+router.get('/applicants/stats', verifyToken, verifyAdmin, applicantController.getApplicantsStats);
+router.get('/applicants/search', verifyToken, verifyAdmin, applicantController.searchApplicants);
+router.get('/applicants/:id', verifyToken, verifyAdmin, applicantController.getApplicantDetails);
+router.post('/applicants', verifyToken, verifyAdmin, applicantController.createApplicant);
+router.put('/applicants/:id', verifyToken, verifyAdmin, applicantController.updateApplicant);
+router.put('/applicants/:id/status', verifyToken, verifyAdmin, applicantController.updateApplicantStatus);
+router.delete('/applicants/:id', verifyToken, verifyAdmin, applicantController.deleteApplicant);
+
+
+
 // ==================== ✅ RUTA DE SALUD ====================
 router.get('/health', (req, res) => {
   res.json({ 

@@ -11,6 +11,10 @@ import IncidentsList from '../pages/admin/incidents/IncidentsList';
 import IncidentDetails from '../pages/admin/incidents/IncidentDetails';
 import ProvidersList from '../pages/admin/providers/ProvidersList';
 
+import ApplicantsList from '../pages/admin/applicants/ApplicantsList';
+import ApplicantsDetails from '../pages/admin/applicants/ApplicantsDetails';
+import ApplicantsForm from '../pages/admin/applicants/ApplicantsForm';
+
 export default function AdminRoutes() {
   const { user, isAuthenticated } = useAuth();
 
@@ -30,6 +34,12 @@ export default function AdminRoutes() {
         {/* Incidencias */}
         <Route path="/incidencias" element={<IncidentsList />} />
         <Route path="/incidencias/:id" element={<IncidentDetails />} />
+        
+        {/* Postulantes */}
+        <Route path="/applicants" element={<ApplicantsList />} />
+        <Route path="/applicants/new" element={<ApplicantsForm />} />
+        <Route path="/applicants/:applicantId/edit" element={<ApplicantsForm />} />
+        <Route path="/applicants/:applicantId" element={<ApplicantsDetails />} />
         
         {/* Proveedores */}
         <Route path="/proveedores" element={<ProvidersList />} />

@@ -155,5 +155,49 @@ export const adminAPI = {
   getProviderById: (id) => {
     console.log('🔍 Solicitando proveedor por ID...');
     return api.get(`/admin/proveedores/${id}`);
+  },
+
+
+  
+  // ==================== POSTULANTES ====================
+  getApplicants: () => {
+    console.log('📋 Solicitando lista de postulantes...');
+    return api.get('/admin/applicants');
+  },
+  
+  getApplicantDetails: (id) => {
+    console.log(`🔍 Solicitando detalles del postulante ${id}...`);
+    return api.get(`/admin/applicants/${id}`);
+  },
+  
+  createApplicant: (data) => {
+    console.log('➕ Creando nuevo postulante...');
+    return api.post('/admin/applicants', data);
+  },
+  
+  updateApplicant: (id, data) => {
+    console.log(`✏️ Actualizando postulante ${id}...`);
+    return api.put(`/admin/applicants/${id}`, data);
+  },
+  
+  deleteApplicant: (id) => {
+    console.log(`🗑️ Eliminando postulante ${id}...`);
+    return api.delete(`/admin/applicants/${id}`);
+  },
+  
+  updateApplicantStatus: (id, estado) => {
+    console.log(`🔄 Actualizando estado del postulante ${id} a ${estado}...`);
+    return api.put(`/admin/applicants/${id}/status`, { status: estado });
+  },
+  
+  searchApplicants: (query) => {
+    console.log('🔎 Buscando postulantes:', query);
+    return api.get(`/admin/applicants/search?query=${query}`);
+  },
+  
+  getApplicantsStats: () => {
+    console.log('📊 Obteniendo estadísticas de postulantes...');
+    return api.get('/admin/applicants/stats');
   }
+
 };
