@@ -46,6 +46,10 @@ module.exports = (sequelize) => {
       allowNull: true,
       field: 'metodo_pago'
     },
+    comprobante: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
     comprobanteSubido: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
@@ -72,7 +76,9 @@ module.exports = (sequelize) => {
     }
   }, {
     tableName: 'pagos',
-    timestamps: false
+    timestamps: true,
+    createdAt: 'fecha_creacion',
+    updatedAt: false
   });
 
   return Payment;

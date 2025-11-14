@@ -25,10 +25,6 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(100),
       allowNull: false
     },
-    telefono: {
-      type: DataTypes.STRING(20),
-      allowNull: true
-    },
     ubicacion: {
       type: DataTypes.TEXT,
       allowNull: true

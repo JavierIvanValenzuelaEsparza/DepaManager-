@@ -42,8 +42,12 @@ router.put('/incidencias/:id', verifyToken, verifyAdmin, incidentsController.upd
 
 // ==================== ✅ RUTAS DE PROVEEDORES ====================
 // Lista de proveedores para asignar a incidencias
-router.get('/proveedores', verifyToken, verifyAdmin, providersController.getProviders);
-
+router.get('/proveedores', verifyToken, verifyAdmin, providersController.getAllProviders);
+router.get('/proveedores/available', verifyToken, verifyAdmin, providersController.getAvailableProviders);
+router.get('/proveedores/:id', verifyToken, verifyAdmin, providersController.getProviderById);
+router.post('/proveedores', verifyToken, verifyAdmin, providersController.createProvider);
+router.put('/proveedores/:id', verifyToken, verifyAdmin, providersController.updateProvider);
+router.delete('/proveedores/:id', verifyToken, verifyAdmin, providersController.deleteProvider);
 // ==================== ✅ RUTA DE SALUD ====================
 router.get('/health', (req, res) => {
   res.json({ 

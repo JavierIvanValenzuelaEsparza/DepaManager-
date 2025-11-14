@@ -129,5 +129,31 @@ export const adminAPI = {
   getProviders: () => {
     console.log('🔧 Solicitando lista de proveedores...');
     return api.get('/admin/proveedores');
+  },
+  
+  // ✅ RUTAS AGREGADAS PARA PROVEEDORES
+  createProvider: (providerData) => {
+    console.log('➕ Creando nuevo proveedor...');
+    return api.post('/admin/proveedores', providerData);
+  },
+  
+  updateProvider: (id, providerData) => {
+    console.log('✏️ Actualizando proveedor...');
+    return api.put(`/admin/proveedores/${id}`, providerData);
+  },
+  
+  deleteProvider: (id) => {
+    console.log('🗑️ Eliminando proveedor...');
+    return api.delete(`/admin/proveedores/${id}`);
+  },
+  
+  getAvailableProviders: () => {
+    console.log('✅ Solicitando proveedores disponibles...');
+    return api.get('/admin/proveedores/available');
+  },
+  
+  getProviderById: (id) => {
+    console.log('🔍 Solicitando proveedor por ID...');
+    return api.get(`/admin/proveedores/${id}`);
   }
 };

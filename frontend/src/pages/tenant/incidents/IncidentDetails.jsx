@@ -15,14 +15,10 @@ export default function TenantIncidentDetails() {
   const loadIncidentDetails = async () => {
     try {
       setLoading(true);
-      // Por ahora usamos el endpoint de lista y filtramos
-      const response = await tenantAPI.getIncidents({});
+      const response = await tenantAPI.getIncidentDetails(id);
       
       if (response.success) {
-        const foundIncident = response.data.incidencias.find(
-          inc => inc.idIncidencia === parseInt(id)
-        );
-        setIncident(foundIncident);
+        setIncident(response.data);
       }
     } catch (error) {
       console.error('Error cargando detalle de incidencia:', error);

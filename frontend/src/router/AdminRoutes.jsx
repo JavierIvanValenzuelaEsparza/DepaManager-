@@ -9,6 +9,7 @@ import TenantsList from '../pages/admin/tenants/TenantsList';
 import TenantDetails from '../pages/admin/tenants/TenantDetails';
 import IncidentsList from '../pages/admin/incidents/IncidentsList';
 import IncidentDetails from '../pages/admin/incidents/IncidentDetails';
+import ProvidersList from '../pages/admin/providers/ProvidersList';
 
 export default function AdminRoutes() {
   const { user, isAuthenticated } = useAuth();
@@ -29,6 +30,9 @@ export default function AdminRoutes() {
         {/* Incidencias */}
         <Route path="/incidencias" element={<IncidentsList />} />
         <Route path="/incidencias/:id" element={<IncidentDetails />} />
+        
+        {/* Proveedores */}
+        <Route path="/proveedores" element={<ProvidersList />} />
         
         <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
       </Routes>

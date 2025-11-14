@@ -94,6 +94,22 @@ export const tenantAPI = {
     }
   },
 
+  /**
+   * Obtener detalle de una incidencia específica
+   * @param {String} id - ID de la incidencia
+   * @returns {Promise} Detalle de la incidencia
+   */
+  getIncidentDetails: async (id) => {
+    try {
+      console.log(`🔍 Solicitando detalle de incidencia ${id}...`);
+      const response = await api.get(`/tenant/incidencias/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error obteniendo detalle de incidencia:', error);
+      throw error;
+    }
+  },
+
   // ==================== CONTRATOS ====================
   
   /**

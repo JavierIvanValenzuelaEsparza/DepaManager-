@@ -1,29 +1,21 @@
-// frontend/src/components/ui/Modal.jsx
 import React from 'react';
 
-const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
+const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
 
-  const sizeClasses = {
-    sm: 'max-w-md',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl'
-  };
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className={`bg-white rounded-xl shadow-lg w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto`}>
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-800">{title}</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg w-full max-w-md mx-4">
+        <div className="flex justify-between items-center p-4 border-b">
+          <h3 className="text-lg font-semibold">{title}</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl"
+            className="text-gray-500 hover:text-gray-700"
           >
-            ×
+            ✕
           </button>
         </div>
-        <div className="p-6">
+        <div className="p-4">
           {children}
         </div>
       </div>
@@ -31,4 +23,4 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
   );
 };
 
-export default Modal;
+export default Modal; // ✅ Exportación por defecto

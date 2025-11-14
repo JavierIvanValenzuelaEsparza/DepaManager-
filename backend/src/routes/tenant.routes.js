@@ -25,6 +25,7 @@ router.post('/pagos/:idPago/comprobante', paymentsController.uploadPaymentReceip
 // Incidencias
 router.get('/incidencias', incidentsController.getIncidents);
 router.post('/incidencias', incidentsController.reportIncident);
+router.get('/incidencias/:id', incidentsController.getIncidentDetails);
 
 // Contratos
 router.get('/contratos', contractsController.getContracts);

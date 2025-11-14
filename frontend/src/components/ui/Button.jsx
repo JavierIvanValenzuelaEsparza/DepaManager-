@@ -1,25 +1,31 @@
-// frontend/src/components/ui/Button.jsx
 import React from 'react';
 
-// Exportación nombrada (la que ya tienes)
-export function Button({ children, className = '', variant = 'default', ...props }) {
-  const baseStyles = 'inline-flex items-center justify-center px-4 py-2 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
+const Button = ({ 
+  children, 
+  onClick, 
+  type = 'button', 
+  variant = 'primary',
+  className = '',
+  ...props 
+}) => {
+  const baseClasses = 'px-4 py-2 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-offset-2';
   
   const variants = {
-    default: 'bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500',
-    outline: 'border border-emerald-600 text-emerald-600 hover:bg-emerald-50 focus:ring-emerald-500',
+    primary: 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500',
+    secondary: 'bg-gray-300 text-gray-700 hover:bg-gray-400 focus:ring-gray-500',
+    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500'
   };
 
   return (
-    <button 
-      className={`${baseStyles} ${variants[variant]} ${className}`}
+    <button
+      type={type}
+      onClick={onClick}
+      className={`${baseClasses} ${variants[variant]} ${className}`}
       {...props}
     >
       {children}
     </button>
   );
-}
+};
 
-// Agrega esta exportación por defecto
-const ButtonDefault = Button;
-export default ButtonDefault;
+export default Button; // ✅ Exportación por defecto

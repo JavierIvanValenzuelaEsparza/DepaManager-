@@ -17,7 +17,7 @@ const getIncidents = async (req, res) => {
           attributes: ['idProveedor', 'nombre', 'especialidad', 'contacto']
         }
       ],
-      order: [['fecha_reporte', 'DESC']]
+      order: [['fechaReporte', 'DESC']]
     });
 
     // Calcular estadísticas

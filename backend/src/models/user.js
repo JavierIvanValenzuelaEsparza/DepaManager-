@@ -71,7 +71,7 @@ module.exports = (sequelize) => {
     fechaCreacion: {
       type: DataTypes.DATE,
       field: 'fecha_creacion',
-      allowNull: true,
+      allowNull: false,
       defaultValue: DataTypes.NOW
     }
   }, {
