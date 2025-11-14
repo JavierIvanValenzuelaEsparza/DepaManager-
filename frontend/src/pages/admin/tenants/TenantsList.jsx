@@ -63,9 +63,8 @@ const TenantsList = () => {
   };
 
   const handleViewDocuments = (tenantId) => {
-    // Aquí puedes implementar la lógica para ver documentos
-    console.log('Ver documentos del inquilino:', tenantId);
-    alert('Funcionalidad de documentos en desarrollo');
+    // Redirigir a la página de contratos filtrada por este inquilino
+    navigate(`/admin/contratos?inquilino=${tenantId}`);
   };
 
   // Filtrar inquilinos

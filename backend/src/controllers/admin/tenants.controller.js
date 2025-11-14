@@ -325,6 +325,69 @@ const updateTenant = async (req, res) => {
           { idInquilino: tenantId },
           { where: { idDepartamento } }
         );
+
+        // 🆕 AUTO-CREAR CONTRATO cuando se asigna un departamento
+        // Verificar si ya existe un contrato activo para este inquilino y departamento
+        const contratoExistente = await Contract.findOne({
+          where: {
+            idInquilino: tenantId,
+            idDepartamento: idDepartamento,
+            estado: 'Activo'
+          }
+        });
+
+        // Solo crear contrato si no existe uno activo para este departamento
+        if (!contratoExistente) {
+          console.log('📝 Creando contrato automático para inquilino:', tenantId);
+          
+          // Obtener datos completos del inquilino para usar sus fechas y plan
+          const inquilinoCompleto = await User.findByPk(tenantId);
+          
+          // Calcular fechas desde los datos del inquilino o usar fechas por defecto
+          let fechaInicio = inquilinoCompleto.fechaInicioContrato || new Date();
+          let fechaFin = inquilinoCompleto.fechaFinContrato;
+          
+          // Si no tiene fecha fin, calcular 12 meses desde la fecha de inicio
+          if (!fechaFin) {
+            fechaFin = new Date(fechaInicio);
+            fechaFin.setFullYear(fechaFin.getFullYear() + 1);
+          }
+          
+          // Calcular duración en meses
+          const duracionMeses = Math.round((new Date(fechaFin) - new Date(fechaInicio)) / (1000 * 60 * 60 * 24 * 30));
+          
+          // Determinar monto mensual según el plan del inquilino
+          let montoMensual = 0;
+          let depositoGarantia = 0;
+          
+          if (inquilinoCompleto.plan === 'Premium') {
+            montoMensual = 1000;
+            depositoGarantia = 1000;
+          } else if (inquilinoCompleto.plan === 'Estándar') {
+            montoMensual = 700;
+            depositoGarantia = 700;
+          } else {
+            // Plan Gratuito o sin plan definido
+            montoMensual = 500;
+            depositoGarantia = 500;
+          }
+
+          await Contract.create({
+            idInquilino: tenantId,
+            idDepartamento: idDepartamento,
+            fechaInicio: fechaInicio,
+            fechaFin: fechaFin,
+            montoMensual: montoMensual,
+            depositoGarantia: depositoGarantia,
+            duracionMeses: duracionMeses,
+            estado: 'Activo',
+            archivoPdf: null
+          });
+
+          console.log(`✅ Contrato automático creado: ${duracionMeses} meses, S/ ${montoMensual}/mes`);
+        } else {
+          console.log('ℹ️ Ya existe un contrato activo para este inquilino y departamento');
+        }
       }
     }
 

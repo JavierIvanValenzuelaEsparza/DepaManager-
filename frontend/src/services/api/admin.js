@@ -155,5 +155,118 @@ export const adminAPI = {
   getProviderById: (id) => {
     console.log('🔍 Solicitando proveedor por ID...');
     return api.get(`/admin/proveedores/${id}`);
+  },
+
+  
+  // ==================== CONTRATOS ====================
+  /**
+   * Obtener lista de contratos con filtros opcionales
+   * @param {Object} filters - Filtros (inquilino)
+   * @returns {Promise} Lista de contratos
+   */
+  getContracts: (filters = {}) => {
+    console.log('📑 Solicitando lista de contratos con filtros:', filters);
+    const params = new URLSearchParams();
+    Object.keys(filters).forEach(key => {
+      if (filters[key]) params.append(key, filters[key]);
+    });
+    return api.get(`/admin/contratos?${params.toString()}`);
+  },
+
+  /**
+   * Obtener contrato por ID
+   * @param {Number} id - ID del contrato
+   * @returns {Promise} Detalles del contrato
+   */
+  getContractById: (id) => {
+    console.log(`🔍 Solicitando contrato ${id}...`);
+    return api.get(`/admin/contratos/${id}`);
+  },
+
+  /**
+   * Crear nuevo contrato
+   * @param {Object} contractData - Datos del contrato
+   * @returns {Promise} Contrato creado
+   */
+  createContract: (contractData) => {
+    console.log('➕ Creando nuevo contrato...');
+    return api.post('/admin/contratos', contractData);
+  },
+
+  /**
+   * Actualizar contrato
+   * @param {Number} id - ID del contrato
+   * @param {Object} contractData - Datos actualizados
+   * @returns {Promise} Contrato actualizado
+   */
+  updateContract: (id, contractData) => {
+    console.log('✏️ Actualizando contrato...');
+    return api.put(`/admin/contratos/${id}`, contractData);
+  },
+
+  /**
+   * Eliminar contrato
+   * @param {Number} id - ID del contrato
+   * @returns {Promise} Resultado de eliminación
+   */
+  deleteContract: (id) => {
+    console.log('🗑️ Eliminando contrato...');
+    return api.delete(`/admin/contratos/${id}`);
+  },
+
+  /**
+   * Subir archivo PDF del contrato
+   * @param {Number} id - ID del contrato
+   * @param {FormData} formData - FormData con el archivo
+   * @returns {Promise} Resultado de subida
+   */
+  uploadContractFile: (id, formData) => {
+    console.log('📤 Subiendo archivo de contrato...');
+    return api.post(`/admin/contratos/${id}/upload`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  },
+
+  /**
+   * Descargar archivo PDF del contrato
+   * @param {Number} id - ID del contrato
+   * @returns {Promise} Archivo PDF
+   */
+  downloadContractFile: (id) => {
+    console.log('📥 Descargando archivo de contrato...');
+    return api.get(`/admin/contratos/${id}/download`, {
+      responseType: 'blob'
+    });
+  },
+
+  /**
+   * Generar PDF del contrato
+   * @param {Number} id - ID del contrato
+   * @returns {Promise} Resultado de generación
+   */
+  generateContractPDF: (id) => {
+    console.log('📄 Generando PDF del contrato...');
+    return api.post(`/admin/contratos/${id}/generate-pdf`);
+  },
+
+  /**
+   * Crear contratos faltantes para inquilinos existentes
+   * @returns {Promise} Resultado de creación masiva
+   */
+  createMissingContracts: () => {
+    console.log('🔄 Creando contratos faltantes...');
+    return api.post('/admin/contratos/create-missing');
+  },
+
+  /**
+   * Obtener contratos por inquilino
+   * @param {Number} id_inquilino - ID del inquilino
+   * @returns {Promise} Lista de contratos del inquilino
+   */
+  getContractsByTenant: (id_inquilino) => {
+    console.log(`👥 Solicitando contratos del inquilino ${id_inquilino}...`);
+    return api.get(`/admin/contratos/tenant/${id_inquilino}`);
   }
 };

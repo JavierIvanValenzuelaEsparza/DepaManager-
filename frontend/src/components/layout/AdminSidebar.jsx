@@ -38,7 +38,7 @@ const AdminSidebar = () => {
     { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/admin/departments', icon: Building2, label: 'Departamentos' },
     { path: '/admin/tenants', icon: Users, label: 'Inquilinos' },
-    { path: '/admin/contracts', icon: FileText, label: 'Contratos' },
+    { path: '/admin/contratos', icon: FileText, label: 'Contratos' },
     { path: '/admin/payments', icon: DollarSign, label: 'Pagos' },
     { path: '/admin/incidencias', icon: Wrench, label: 'Incidencias' },
     { path: '/admin/proveedores', icon: Building, label: 'Proveedores' },

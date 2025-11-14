@@ -2,23 +2,25 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken, verifyAdmin } = require('../middlewares/auth.middleware');
 
-// Importar controladores (AGREGAR ESTOS)
+// Importar controladores
 const dashboardController = require('../controllers/admin/dashboard.controller');
 const departmentsController = require('../controllers/admin/departments.controller');
 const buildingsController = require('../controllers/admin/buildings.controller');
 const tenantsController = require('../controllers/admin/tenants.controller');
-const incidentsController = require('../controllers/admin/incidents.controller'); // ✅ NUEVO
-const providersController = require('../controllers/admin/providers.controller'); // ✅ NUEVO
+const incidentsController = require('../controllers/admin/incidents.controller');
+const providersController = require('../controllers/admin/providers.controller');
+const contractsController = require('../controllers/admin/contracts.controller');
+const { uploadContract } = require('../middlewares/upload.middleware');
 
 console.log('✅ Controladores cargados correctamente');
 
-// ==================== ✅ RUTAS DEL DASHBOARD ====================
+// ==================== RUTAS DEL DASHBOARD ====================
 router.get('/dashboard', verifyToken, verifyAdmin, dashboardController.getDashboardData);
 
-// ==================== ✅ RUTAS DE EDIFICIOS ====================
+// ==================== RUTAS DE EDIFICIOS ====================
 router.get('/buildings', verifyToken, verifyAdmin, buildingsController.getBuildings);
 
-// ==================== ✅ RUTAS DE DEPARTAMENTOS ====================
+// ==================== RUTAS DE DEPARTAMENTOS ====================
 router.get('/departments', verifyToken, verifyAdmin, departmentsController.getDepartments);
 router.get('/departments/available', verifyToken, verifyAdmin, departmentsController.getAvailableDepartments);
 router.get('/departments/:id', verifyToken, verifyAdmin, departmentsController.getDepartmentDetails);
@@ -26,7 +28,7 @@ router.post('/departments/batch', verifyToken, verifyAdmin, departmentsControlle
 router.put('/departments/:id', verifyToken, verifyAdmin, departmentsController.updateDepartment);
 router.delete('/departments/:id', verifyToken, verifyAdmin, departmentsController.deleteDepartment);
 
-// ==================== ✅ RUTAS DE INQUILINOS ====================
+// ==================== RUTAS DE INQUILINOS ====================
 router.get('/tenants', verifyToken, verifyAdmin, tenantsController.getTenants);
 router.get('/tenants/:id', verifyToken, verifyAdmin, tenantsController.getTenantDetails);
 router.post('/tenants', verifyToken, verifyAdmin, tenantsController.createTenant);
@@ -34,21 +36,32 @@ router.put('/tenants/:id', verifyToken, verifyAdmin, tenantsController.updateTen
 router.delete('/tenants/:id', verifyToken, verifyAdmin, tenantsController.deleteTenant);
 router.patch('/tenants/:id/status', verifyToken, verifyAdmin, tenantsController.updateTenantStatus);
 
-// ==================== ✅ RUTAS DE INCIDENCIAS ====================
-// El administrador puede ver todas las incidencias, asignar proveedores y cambiar estados
+// ==================== RUTAS DE INCIDENCIAS ====================
 router.get('/incidencias', verifyToken, verifyAdmin, incidentsController.getIncidents);
 router.get('/incidencias/:id', verifyToken, verifyAdmin, incidentsController.getIncidentDetails);
 router.put('/incidencias/:id', verifyToken, verifyAdmin, incidentsController.updateIncident);
 
-// ==================== ✅ RUTAS DE PROVEEDORES ====================
-// Lista de proveedores para asignar a incidencias
+// ==================== RUTAS DE PROVEEDORES ====================
 router.get('/proveedores', verifyToken, verifyAdmin, providersController.getAllProviders);
 router.get('/proveedores/available', verifyToken, verifyAdmin, providersController.getAvailableProviders);
 router.get('/proveedores/:id', verifyToken, verifyAdmin, providersController.getProviderById);
 router.post('/proveedores', verifyToken, verifyAdmin, providersController.createProvider);
 router.put('/proveedores/:id', verifyToken, verifyAdmin, providersController.updateProvider);
 router.delete('/proveedores/:id', verifyToken, verifyAdmin, providersController.deleteProvider);
-// ==================== ✅ RUTA DE SALUD ====================
+
+// ==================== RUTAS DE CONTRATOS ====================
+router.get('/contratos', verifyToken, verifyAdmin, contractsController.getAllContracts);
+router.post('/contratos/create-missing', verifyToken, verifyAdmin, contractsController.createMissingContracts);
+router.get('/contratos/:id', verifyToken, verifyAdmin, contractsController.getContractById);
+router.post('/contratos', verifyToken, verifyAdmin, contractsController.createContract);
+router.put('/contratos/:id', verifyToken, verifyAdmin, contractsController.updateContract);
+router.delete('/contratos/:id', verifyToken, verifyAdmin, contractsController.deleteContract);
+router.post('/contratos/:id/upload', verifyToken, verifyAdmin, uploadContract.single('archivo_pdf'), contractsController.uploadContractFile);
+router.get('/contratos/:id/download', verifyToken, verifyAdmin, contractsController.downloadContractFile);
+router.post('/contratos/:id/generate-pdf', verifyToken, verifyAdmin, contractsController.generateContractPDF);
+router.get('/contratos/tenant/:id_inquilino', verifyToken, verifyAdmin, contractsController.getContractsByTenant);
+
+// ==================== RUTA DE SALUD ====================
 router.get('/health', (req, res) => {
   res.json({ 
     success: true, 

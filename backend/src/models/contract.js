@@ -59,19 +59,5 @@ module.exports = (sequelize) => {
     updatedAt: false
   });
 
-  Contract.associate = (models) => {
-    // Un contrato pertenece a un inquilino
-    Contract.belongsTo(models.User, {
-      foreignKey: 'id_inquilino',
-      as: 'inquilino'
-    });
-    
-    // Un contrato pertenece a un departamento
-    Contract.belongsTo(models.Department, {
-      foreignKey: 'id_departamento',
-      as: 'departamento'
-    });
-  };
-
   return Contract;
 };
