@@ -14,7 +14,6 @@ import ContractsList from '../pages/admin/contracts/ContractsList';
 
 import ApplicantsList from '../pages/admin/applicants/ApplicantsList';
 import ApplicantsDetails from '../pages/admin/applicants/ApplicantsDetails';
-import ApplicantsForm from '../pages/admin/applicants/ApplicantsForm';
 
 export default function AdminRoutes() {
   const { user, isAuthenticated } = useAuth();
@@ -39,8 +38,6 @@ export default function AdminRoutes() {
         
         {/* Postulantes */}
         <Route path="/applicants" element={<ApplicantsList />} />
-        <Route path="/applicants/new" element={<ApplicantsForm />} />
-        <Route path="/applicants/:applicantId/edit" element={<ApplicantsForm />} />
         <Route path="/applicants/:applicantId" element={<ApplicantsDetails />} />
         
         {/* Proveedores */}
