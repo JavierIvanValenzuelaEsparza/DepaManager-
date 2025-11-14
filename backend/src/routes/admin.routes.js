@@ -10,6 +10,7 @@ const tenantsController = require('../controllers/admin/tenants.controller');
 const incidentsController = require('../controllers/admin/incidents.controller');
 const providersController = require('../controllers/admin/providers.controller');
 const contractsController = require('../controllers/admin/contracts.controller');
+const applicantController = require('../controllers/admin/applicants.controller');
 const { uploadContract } = require('../middlewares/upload.middleware');
 
 console.log('✅ Controladores cargados correctamente');
@@ -60,6 +61,16 @@ router.post('/contratos/:id/upload', verifyToken, verifyAdmin, uploadContract.si
 router.get('/contratos/:id/download', verifyToken, verifyAdmin, contractsController.downloadContractFile);
 router.post('/contratos/:id/generate-pdf', verifyToken, verifyAdmin, contractsController.generateContractPDF);
 router.get('/contratos/tenant/:id_inquilino', verifyToken, verifyAdmin, contractsController.getContractsByTenant);
+
+// ==================== RUTAS DE POSTULANTES ====================
+router.get('/applicants', verifyToken, verifyAdmin, applicantController.getAllApplicants);
+router.get('/applicants/stats', verifyToken, verifyAdmin, applicantController.getApplicantsStats);
+router.get('/applicants/search', verifyToken, verifyAdmin, applicantController.searchApplicants);
+router.get('/applicants/:id', verifyToken, verifyAdmin, applicantController.getApplicantDetails);
+router.post('/applicants', verifyToken, verifyAdmin, applicantController.createApplicant);
+router.put('/applicants/:id', verifyToken, verifyAdmin, applicantController.updateApplicant);
+router.put('/applicants/:id/status', verifyToken, verifyAdmin, applicantController.updateApplicantStatus);
+router.delete('/applicants/:id', verifyToken, verifyAdmin, applicantController.deleteApplicant);
 
 // ==================== RUTA DE SALUD ====================
 router.get('/health', (req, res) => {
