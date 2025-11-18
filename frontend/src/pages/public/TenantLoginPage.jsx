@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 import loginTenantIllustration from '../../assets/login-tenant-illustration.png';
-
 
 export default function TenantLoginPage() {
   const [email, setEmail] = useState('');
@@ -13,8 +12,22 @@ export default function TenantLoginPage() {
   const [loading, setLoading] = useState(false);
   
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { login, loginWithGoogle } = useAuth();
 
+  // Verificar si hay errores de OAuth en la URL
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    const messageParam = searchParams.get('message');
+    
+    if (errorParam === 'wrong_portal') {
+      setError('⚠️ ' + (messageParam || 'Por favor, usa el portal correcto para tu tipo de cuenta'));
+    } else if (errorParam === 'auth_failed') {
+      setError('❌ Error de autenticación con Google');
+    } else if (errorParam === 'user_not_found') {
+      setError('❌ Usuario no encontrado');
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,7 +45,7 @@ export default function TenantLoginPage() {
         console.log('✅ Login exitoso para inquilino');
         console.log('🎭 Rol:', result.user?.rol);
         
-        // ✅ Verificar que sea inquilino y redirigir
+        // ✅ Verificar que sea inquilino
         if (result.user.rol === 'Inquilino') {
           console.log('🔀 Redirigiendo a /tenant/dashboard');
           console.log('💾 Datos en localStorage antes de redirigir:');
@@ -44,8 +57,14 @@ export default function TenantLoginPage() {
             console.log('🚀 Ejecutando redirección...');
             window.location.href = '/tenant/dashboard';
           }, 200);
+        } else if (result.user.rol === 'Administrador') {
+          setError('⚠️ Esta cuenta es de administrador. Por favor, usa el portal de administradores.');
+          // Redirigir después de 3 segundos
+          setTimeout(() => {
+            window.location.href = '/admin/auth';
+          }, 3000);
         } else {
-          setError('Esta cuenta no es de inquilino');
+          setError('Rol de usuario no válido');
         }
       } else {
         setError(result.error || 'Error al iniciar sesión');
@@ -56,6 +75,13 @@ export default function TenantLoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleLogin = () => {
+    console.log('🔐 Iniciando login con Google desde Tenant...');
+    // Guardar contexto de login para validación posterior
+    sessionStorage.setItem('login_context', 'tenant');
+    loginWithGoogle('tenant');
   };
 
   return (
@@ -71,6 +97,29 @@ export default function TenantLoginPage() {
             <p className="text-slate-600 text-sm">
               Accede a tu portal de inquilino
             </p>
+          </div>
+
+          {/* ✅ BOTÓN GOOGLE */}
+          <button
+            onClick={handleGoogleLogin}
+            className="w-full flex items-center justify-center gap-3 bg-white border border-slate-300 text-slate-700 font-medium py-3 px-6 rounded-full hover:bg-slate-50 transition-all shadow-sm mb-4"
+          >
+            <img 
+              src="https://developers.google.com/identity/images/g-logo.png" 
+              alt="Google" 
+              className="w-5 h-5"
+            />
+            Continuar con Google
+          </button>
+
+          {/* Separador */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-slate-500">o</span>
+            </div>
           </div>
 
           {/* Ícono decorativo */}

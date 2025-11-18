@@ -2,7 +2,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const { sequelize } = require('./models');
+const passport = require('./config/passport');
 
 
 const app = express();
@@ -19,6 +21,7 @@ app.use(cors({
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 console.log('🔍 Cargando rutas...');
 
@@ -26,6 +29,7 @@ console.log('🔍 Cargando rutas...');
 app.use('/auth', require('./routes/auth.routes'));
 app.use('/admin', require('./routes/admin.routes'));
 app.use('/tenant', require('./routes/tenant.routes'));
+app.use(passport.initialize());
 
 // Ruta de salud
 app.get('/health', async (req, res) => {
@@ -89,13 +93,13 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('✅ Conexión a BD establecida correctamente');
     
-    console.log('🔄 Creando tablas...');
+    console.log('🔄 Sincronizando modelos con la base de datos...');
     await sequelize.sync({ 
       force: false, 
-      alter: false
+      alter: true  // ✅ Permite agregar nuevas columnas automáticamente
     });
     
-    console.log('✅ Tablas verificadas/creadas correctamente');
+    console.log('✅ Tablas sincronizadas correctamente');
     
     app.listen(PORT, () => {
       console.log(`🚀 Servidor corriendo en puerto ${PORT}`);

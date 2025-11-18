@@ -1,6 +1,7 @@
 // frontend/src/contexts/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { authAPI } from '../services/api/auth';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 const AuthContext = createContext();
 
@@ -10,6 +11,15 @@ export const useAuth = () => {
     throw new Error('useAuth debe ser usado dentro de un AuthProvider');
   }
   return context;
+};
+
+// ✅ WRAPPER PARA GOOGLE OAUTH (en el mismo archivo o crear uno nuevo)
+export const GoogleAuthProvider = ({ children }) => {
+  return (
+    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
+      {children}
+    </GoogleOAuthProvider>
+  );
 };
 
 export const AuthProvider = ({ children }) => {
@@ -138,6 +148,12 @@ export const AuthProvider = ({ children }) => {
       };
     }
   };
+  // Función de login con Google con contexto
+  const loginWithGoogle = (context = 'tenant') => {
+    const backendUrl = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+    // Pasar el contexto como parámetro state
+    window.location.href = `${backendUrl}/auth/google?context=${context}`;
+  };
 
   // ✅ FUNCIÓN DE LOGOUT
   const logout = () => {
@@ -218,7 +234,8 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     registerAdmin,
-    checkAuth
+    checkAuth,
+    loginWithGoogle 
   };
 
   return (

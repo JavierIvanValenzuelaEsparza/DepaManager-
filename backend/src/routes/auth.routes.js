@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 // ✅ IMPORTAR CORRECTAMENTE desestructurando
-const { login, registerAdmin, verifyToken } = require('../controllers/auth.controller');
+const { login, registerAdmin, verifyToken, googleAuth, googleCallback } = require('../controllers/auth.controller');
 
 // ✅ Debug: Verificar que las funciones existen
 console.log('🔍 AuthController - login:', typeof login);
@@ -13,6 +13,9 @@ console.log('🔍 AuthController - verifyToken:', typeof verifyToken);
 router.post('/login', login);
 router.post('/register-admin', registerAdmin);
 router.get('/verify', verifyToken);
+// ✅ NUEVAS RUTAS GOOGLE OAUTH
+router.get('/google', googleAuth);
+router.get('/google/callback', googleCallback);
 
 // Ruta de prueba para auth
 router.get('/test', (req, res) => {

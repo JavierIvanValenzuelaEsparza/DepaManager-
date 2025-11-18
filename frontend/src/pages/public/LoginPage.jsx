@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function LoginPage() {
@@ -8,7 +8,22 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login, isAuthenticated, user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { login, loginWithGoogle, isAuthenticated, user } = useAuth();
+
+  // Verificar si hay errores de OAuth en la URL
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    const messageParam = searchParams.get('message');
+    
+    if (errorParam === 'wrong_portal') {
+      setError('⚠️ ' + (messageParam || 'Por favor, usa el portal correcto para tu tipo de cuenta'));
+    } else if (errorParam === 'auth_failed') {
+      setError('❌ Error de autenticación con Google');
+    } else if (errorParam === 'user_not_found') {
+      setError('❌ Usuario no encontrado');
+    }
+  }, [searchParams]);
 
   // Redirigir si ya está autenticado
   useEffect(() => {
@@ -16,7 +31,12 @@ export default function LoginPage() {
       if (user.rol === 'Administrador') {
         navigate('/admin/dashboard', { replace: true });
       } else if (user.rol === 'Inquilino') {
-        navigate('/tenant/dashboard', { replace: true });
+        // Si es inquilino pero está en login de admin, mostrar error
+        setError('⚠️ Esta es la zona de administradores. Por favor, usa el portal de inquilinos.');
+        // Limpiar después de 3 segundos y redirigir
+        setTimeout(() => {
+          window.location.href = '/tenant/login';
+        }, 3000);
       }
     }
   }, [isAuthenticated, user, navigate]);
@@ -27,12 +47,41 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login(email, password);
+      const result = await login(email, password);
+      
+      // Validar que sea administrador
+      if (result.success && result.user) {
+        if (result.user.rol === 'Administrador') {
+          // ✅ Es administrador, redirigir al dashboard
+          console.log('✅ Login exitoso como Administrador');
+          setTimeout(() => {
+            window.location.href = '/admin/dashboard';
+          }, 200);
+        } else {
+          // ❌ No es administrador
+          setError('⚠️ Esta cuenta no tiene permisos de administrador. Por favor, usa el portal de inquilinos.');
+          setLoading(false);
+          // Redirigir después de 3 segundos
+          setTimeout(() => {
+            window.location.href = '/tenant/login';
+          }, 3000);
+          return;
+        }
+      } else {
+        setError(result.error || 'Error al iniciar sesión');
+      }
     } catch (err) {
       setError(err.message || 'Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleLogin = () => {
+    console.log('🔐 Iniciando login con Google desde Admin...');
+    // Guardar contexto de login para validación posterior
+    sessionStorage.setItem('login_context', 'admin');
+    loginWithGoogle('admin');
   };
 
   return (
@@ -48,6 +97,29 @@ export default function LoginPage() {
             <p className="text-slate-600 text-sm">
               Acceso exclusivo para administradores
             </p>
+          </div>
+
+          {/* ✅ BOTÓN GOOGLE */}
+          <button
+            onClick={handleGoogleLogin}
+            className="w-full flex items-center justify-center gap-3 bg-white border border-slate-300 text-slate-700 font-medium py-3 px-6 rounded-full hover:bg-slate-50 transition-all shadow-sm mb-4"
+          >
+            <img 
+              src="https://developers.google.com/identity/images/g-logo.png" 
+              alt="Google" 
+              className="w-5 h-5"
+            />
+            Continuar con Google
+          </button>
+
+          {/* Separador */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-slate-500">o</span>
+            </div>
           </div>
 
           {/* Formulario */}

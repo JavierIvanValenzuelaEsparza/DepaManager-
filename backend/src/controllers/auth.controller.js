@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const passport = require('../config/passport');
 const jwt = require('jsonwebtoken');
 const { User, Building } = require('../models'); // ✅ Ya está importado
 
@@ -370,9 +371,117 @@ const verifyToken = async (req, res) => {
     });
   }
 };
+// ✅ INICIAR AUTENTICACIÓN CON GOOGLE
+const googleAuth = (req, res, next) => {
+  console.log('🔐 Iniciando autenticación Google...');
+  // Capturar el contexto (admin o tenant)
+  const context = req.query.context || 'tenant';
+  console.log('📍 Contexto de login:', context);
+  
+  // Guardar contexto en cookie (más confiable que state)
+  res.cookie('oauth_context', context, {
+    httpOnly: true,
+    maxAge: 10 * 60 * 1000, // 10 minutos
+    sameSite: 'lax'
+  });
+  
+  console.log('🍪 Cookie oauth_context guardada:', context);
+  
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    session: false,
+    state: JSON.stringify({ context })  // Mantener state como backup
+  })(req, res, next);
+};
+
+// ✅ CALLBACK DE GOOGLE OAUTH
+const googleCallback = (req, res, next) => {
+  console.log('🔐 Google OAuth callback recibido');
+  console.log('🔍 Query params:', req.query);
+  console.log('🍪 Cookies:', req.cookies);
+  
+  passport.authenticate('google', { 
+    session: false,
+    failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3001'}/admin/auth?error=auth_failed`
+  }, (err, user, info) => {
+    if (err) {
+      console.error('❌ Error en Google callback:', err);
+      res.clearCookie('oauth_context');
+      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3001'}/admin/auth?error=auth_failed`);
+    }
+
+    if (!user) {
+      console.error('❌ Usuario no encontrado en Google callback');
+      res.clearCookie('oauth_context');
+      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3001'}/admin/auth?error=user_not_found`);
+    }
+
+    try {
+      // Leer contexto desde cookie (más confiable)
+      let context = req.cookies.oauth_context || 'tenant';
+      
+      // Si no hay cookie, intentar desde state
+      if (!req.cookies.oauth_context && req.query.state) {
+        try {
+          const stateData = JSON.parse(req.query.state);
+          context = stateData.context || 'tenant';
+        } catch (e) {
+          context = req.query.state || 'tenant';
+        }
+      }
+      
+      console.log('📍 Contexto del callback:', context);
+      console.log('🎭 Rol del usuario:', user.rol);
+      
+      // Limpiar cookie
+      res.clearCookie('oauth_context');
+      
+      // ✅ VALIDAR QUE EL ROL COINCIDA CON EL CONTEXTO
+      if (context === 'admin' && user.rol !== 'Administrador') {
+        console.error('❌ ACCESO DENEGADO: Inquilino intentando acceder a zona de admin');
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+        return res.redirect(`${frontendUrl}/tenant/login?error=wrong_portal&message=Esta cuenta es de inquilino`);
+      }
+      
+      if (context === 'tenant' && user.rol !== 'Inquilino') {
+        console.error('❌ ACCESO DENEGADO: Administrador intentando acceder a zona de inquilinos');
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+        return res.redirect(`${frontendUrl}/admin/auth?error=wrong_portal&message=Esta cuenta es de administrador`);
+      }
+      
+      // Generar token JWT solo si el rol coincide
+      const token = jwt.sign(
+        { 
+          id: user.idUsuario,
+          correo: user.correo,
+          rol: user.rol 
+        },
+        process.env.JWT_SECRET || 'fallback_secret_2024',
+        { expiresIn: '24h' }
+      );
+
+      console.log('✅ Google OAuth exitoso para:', user.correo);
+      console.log('✅ Validación de contexto pasada');
+      
+      // Redirigir al frontend con el token
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+      const redirectUrl = `${frontendUrl}/oauth-success?token=${token}&role=${user.rol}`;
+      
+      console.log('🔀 Redirigiendo a:', redirectUrl);
+      res.redirect(redirectUrl);
+
+    } catch (error) {
+      console.error('❌ Error generando token en Google callback:', error);
+      res.clearCookie('oauth_context');
+      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3001'}/admin/auth?error=token_error`);
+    }
+  })(req, res, next);
+};
 
 module.exports = {
   login,
   registerAdmin,
-  verifyToken
+  verifyToken,
+  googleAuth,
+  googleCallback
 };

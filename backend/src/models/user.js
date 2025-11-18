@@ -73,6 +73,23 @@ module.exports = (sequelize) => {
       field: 'fecha_creacion',
       allowNull: false,
       defaultValue: DataTypes.NOW
+    },
+    // ✅ CAMPOS PARA GOOGLE OAUTH
+    googleId: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      unique: true,
+      field: 'google_id'
+    },
+    authProvider: {
+      type: DataTypes.ENUM('local', 'google'),
+      defaultValue: 'local',
+      field: 'auth_provider'
+    },
+    emailVerified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      field: 'email_verified'
     }
   }, {
     tableName: 'usuarios',
@@ -81,9 +98,11 @@ module.exports = (sequelize) => {
       beforeCreate: async (user) => {
         try {
           console.log('🔐 Hook beforeCreate ejecutándose...');
+          console.log('🔐 Auth Provider:', user.authProvider);
           console.log('🔐 Contraseña antes del hash:', user.contrasenia);
           
-          if (user.contrasenia) {
+          // ✅ Solo hashear si NO es usuario de Google OAuth
+          if (user.contrasenia && user.authProvider !== 'google') {
             // ✅ FORMA CORRECTA - Con salt explícito
             const saltRounds = 10;
             const salt = await bcrypt.genSalt(saltRounds);
@@ -91,6 +110,8 @@ module.exports = (sequelize) => {
             
             console.log('✅ Contraseña hasheada correctamente');
             console.log('🔐 Hash generado (primeros 30 chars):', user.contrasenia.substring(0, 30) + '...');
+          } else if (user.authProvider === 'google') {
+            console.log('⏭️  Usuario de Google OAuth - No se hashea contraseña');
           }
         } catch (error) {
           console.error('❌ Error crítico en beforeCreate:', error);

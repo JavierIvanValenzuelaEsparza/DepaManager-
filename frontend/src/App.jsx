@@ -1,25 +1,18 @@
-// frontend/src/App.jsx
+import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import AppRouter from './router/AppRouter'; // ✅ Usar AppRouter que tiene TODAS las rutas
-import './styles/globals.css';
+import { GoogleAuthProvider } from './contexts/AuthContext'; // ✅ Importar desde el mismo archivo
+import AppRouter from './router/AppRouter';
 
-/**
- * 🎯 COMPONENTE PRINCIPAL DE LA APLICACIÓN
- * Configura el contexto de autenticación y el sistema de rutas
- */
 function App() {
-  console.log('🚀 App.jsx - Iniciando aplicación');
-  
   return (
-    <AuthProvider>
-      <Router>
-        <div className="App">
-          {/* ✅ AppRouter maneja TODAS las rutas (admin, tenant, públicas) */}
+    <GoogleAuthProvider>
+      <AuthProvider>
+        <Router>
           <AppRouter />
-        </div>
-      </Router>
-    </AuthProvider>
+        </Router>
+      </AuthProvider>
+    </GoogleAuthProvider>
   );
 }
 

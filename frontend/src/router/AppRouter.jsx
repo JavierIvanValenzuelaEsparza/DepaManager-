@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import LandingPage from '../pages/public/LandingPage';
 import LoginPage from '../pages/public/LoginPage'; // ✅ Login original
+import OAuthSuccessPage from '../pages/public/OAuthSuccessPage';
 import RegisterPage from '../pages/public/RegisterPage';
 import TenantLoginPage from '../pages/public/TenantLoginPage';
 import AdminRoutes from './AdminRoutes';
@@ -43,7 +44,7 @@ export default function AppRouter() {
       <Route path="/admin/auth" element={<LoginPage />} />
       <Route path="/admin/register" element={<RegisterPage />} />
       <Route path="/tenant/login" element={<TenantLoginPage />} />
-
+      <Route path="/oauth-success" element={<OAuthSuccessPage />} />
       {/* ========== RUTAS PROTEGIDAS - ADMIN ========== */}
       <Route 
         path="/admin/*" 
