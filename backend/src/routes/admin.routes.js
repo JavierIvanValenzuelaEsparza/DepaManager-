@@ -11,6 +11,7 @@ const incidentsController = require('../controllers/admin/incidents.controller')
 const providersController = require('../controllers/admin/providers.controller');
 const contractsController = require('../controllers/admin/contracts.controller');
 const applicantController = require('../controllers/admin/applicants.controller');
+const trainingController = require('../controllers/admin/training.controller');
 const { uploadContract } = require('../middlewares/upload.middleware');
 
 console.log('✅ Controladores cargados correctamente');
@@ -71,6 +72,13 @@ router.post('/applicants', verifyToken, verifyAdmin, applicantController.createA
 router.put('/applicants/:id', verifyToken, verifyAdmin, applicantController.updateApplicant);
 router.put('/applicants/:id/status', verifyToken, verifyAdmin, applicantController.updateApplicantStatus);
 router.delete('/applicants/:id', verifyToken, verifyAdmin, applicantController.deleteApplicant);
+
+// ==================== RUTAS DE ENTRENAMIENTO OCR ====================
+router.get('/training/stats', verifyToken, verifyAdmin, trainingController.getTrainingStats);
+router.get('/training/review', verifyToken, verifyAdmin, trainingController.getDetectionsForReview);
+router.post('/training/correct', verifyToken, verifyAdmin, trainingController.submitCorrection);
+router.get('/training/export', verifyToken, verifyAdmin, trainingController.exportTrainingData);
+router.delete('/training/clean', verifyToken, verifyAdmin, trainingController.cleanOldData);
 
 // ==================== RUTA DE SALUD ====================
 router.get('/health', (req, res) => {

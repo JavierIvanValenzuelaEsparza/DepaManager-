@@ -12,6 +12,7 @@ const Incident = require('./incident')(sequelize, DataTypes);
 const Contract = require('./contract')(sequelize, DataTypes);
 const Notification = require('./notification')(sequelize, DataTypes);
 const Provider = require('./provider')(sequelize, DataTypes);
+const PlateDetection = require('./plate-detection.model')(sequelize, DataTypes);
 
 // 🔥 CORRECCIÓN: Definir asociaciones CORRECTAS
 
@@ -135,6 +136,7 @@ const db = {
   Notification,
   Provider,
   Applicant,
+  PlateDetection,
   sequelize,
   Sequelize: require('sequelize')
 };

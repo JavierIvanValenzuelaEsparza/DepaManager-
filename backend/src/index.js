@@ -29,14 +29,15 @@ console.log('🔍 Cargando rutas...');
 app.use('/auth', require('./routes/auth.routes'));
 app.use('/admin', require('./routes/admin.routes'));
 app.use('/tenant', require('./routes/tenant.routes'));
+app.use('/camera', require('./routes/camera.routes'));
 app.use(passport.initialize());
 
 // Ruta de salud
 app.get('/health', async (req, res) => {
   try {
     await sequelize.authenticate();
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'DepaManager API funcionando',
       database: 'Conectado',
       timestamp: new Date().toISOString()
@@ -52,14 +53,15 @@ app.get('/health', async (req, res) => {
 
 // Ruta de prueba raíz
 app.get('/', (req, res) => {
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     message: '🚀 DepaManager Backend API',
     version: '1.0.0',
     endpoints: {
       auth: '/auth',
-      admin: '/admin', 
+      admin: '/admin',
       tenant: '/tenant',
+      camera: '/camera',
       health: '/health'
     }
   });
@@ -89,18 +91,18 @@ app.use('/admin', require('./routes/admin.routes'));
 const startServer = async () => {
   try {
     console.log('🔍 Verificando conexión a base de datos...');
-    
+
     await sequelize.authenticate();
     console.log('✅ Conexión a BD establecida correctamente');
-    
+
     console.log('🔄 Sincronizando modelos con la base de datos...');
-    await sequelize.sync({ 
-      force: false, 
-      alter: true  // ✅ Permite agregar nuevas columnas automáticamente
+    await sequelize.sync({
+      force: false,
+      alter: false  // ✅ Permite agregar nuevas columnas automáticamente
     });
-    
+
     console.log('✅ Tablas sincronizadas correctamente');
-    
+
     app.listen(PORT, () => {
       console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
       console.log(`📍 URL: http://localhost:${PORT}`);
